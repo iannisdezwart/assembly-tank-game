@@ -1,6 +1,7 @@
 uint32_t width;
 uint32_t height;
 uint32_t refresh_rate;
+uint32_t frame_time_usec;
 
 SDL_Window *window;
 SDL_Renderer *renderer;
@@ -25,6 +26,7 @@ create_fullscreen_window()
 	width = display_mode.w;
 	height = display_mode.h;
 	refresh_rate = display_mode.refresh_rate;
+	frame_time_usec = (uint64_t) 1E6 / refresh_rate;
 
 	// Create window
 
