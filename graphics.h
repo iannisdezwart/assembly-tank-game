@@ -17,7 +17,7 @@ set_colour_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 void
-stroke_rect(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+stroke_rect(int x, int y, uint32_t width, uint32_t height)
 {
 	SDL_Rect rect;
 
@@ -30,7 +30,7 @@ stroke_rect(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 }
 
 void
-fill_rect(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+fill_rect(int x, int y, uint32_t width, uint32_t height)
 {
 	SDL_Rect rect;
 
@@ -42,13 +42,55 @@ fill_rect(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 	SDL_RenderFillRect(renderer, &rect);
 }
 
+struct Point
+{
+	int x;
+	int y;
+};
+
+struct Point
+rotate_point_around_point(int x, int y, float angle,
+	int x_origin, int y_origin)
+{
+	struct Point point;
+
+	float s = sin(angle);
+	float c = cos(angle);
+
+	float dx = x - x_origin;
+	float dy = y - y_origin;
+
+	point.x = dx * c - dy * s + x_origin;
+	point.y = dx * s + dy * c + y_origin;
+
+	return point;
+}
+
 void
-stroke_circle(uint32_t x_centre, uint32_t y_centre, uint32_t radius)
+stroke_rotated_rect(int x, int y, uint32_t width, uint32_t height,
+	float angle, int x_origin, int y_origin)
+{
+	struct Point rotated_point;
+
+	for (int i = x; i < x + width; i++)
+	{
+		for (int j = y; j < y + height; j++)
+		{
+			rotated_point = rotate_point_around_point(i, j, angle,
+				x_origin, y_origin);
+
+			SDL_RenderDrawPoint(renderer, rotated_point.x, rotated_point.y);
+		}
+	}
+}
+
+void
+stroke_circle(int x_centre, int y_centre, uint32_t radius)
 {
 	const uint32_t diameter = radius * 2;
 
-	int32_t x = radius - 1;
-	int32_t y = 0;
+	int x = radius - 1;
+	int y = 0;
 	int32_t tx = 1;
 	int32_t ty = 1;
 	int32_t err = tx - diameter;
@@ -82,17 +124,17 @@ stroke_circle(uint32_t x_centre, uint32_t y_centre, uint32_t radius)
 }
 
 void
-fill_circle(uint32_t x_centre, uint32_t y_centre, uint32_t radius)
+fill_circle(int x_centre, int y_centre, uint32_t radius)
 {
 	const int diameter = radius * 2;
 	const int radius_squared = radius * radius;
 
-	for (uint32_t i = 0; i < diameter; i++)
+	for (int i = 0; i < diameter; i++)
 	{
-		for (uint32_t j = 0; j < diameter; j++)
+		for (int j = 0; j < diameter; j++)
 		{
-			uint32_t x = radius - i;
-			uint32_t y = radius - j;
+			int x = radius - i;
+			int y = radius - j;
 
 			if (x * x + y * y <= radius_squared)
 			{
