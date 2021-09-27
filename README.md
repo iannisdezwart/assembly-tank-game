@@ -1,6 +1,6 @@
 # Assembly Tank Game
 
-Multiplayer online tank game written in Assembly
+Online multiplayer tank game written in Assembly
 
 ## Installation
 
