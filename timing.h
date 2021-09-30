@@ -10,10 +10,12 @@ now(void)
 }
 
 #define FPS_CALC_FRAMES 5
+#define USEC_PER_DT 100
 
 uint64_t frame_times[FPS_CALC_FRAMES];
 size_t frame_times_index;
 float fps;
+float dt;
 
 /**
  * @brief Computes the average FPS for the last `FPS_CALC_FRAMES` frames.
@@ -34,14 +36,15 @@ compute_avg_fps(void)
 }
 
 /**
- *  @brief Initialises the frame_times array.
+ * @brief Initialises the frame_times array and some global timing variables.
  */
 void
-init_frame_times_array(void)
+init_timings(void)
 {
 	frame_times[0] = now();
 	frame_times_index = 1;
 	fps = 0;
+	dt = 0;
 }
 
 /**
@@ -58,5 +61,10 @@ add_frame_time(uint64_t time)
 		frame_times_index = 1;
 	}
 
-	frame_times[frame_times_index++] = time;
+	frame_times[frame_times_index] = time;
+
+	dt = frame_times[frame_times_index] - frame_times[frame_times_index - 1];
+	dt /= USEC_PER_DT;
+
+	frame_times_index++;
 }
