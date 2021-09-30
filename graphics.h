@@ -34,26 +34,6 @@ set_colour_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 }
 
 /**
- * @brief Draws a stroked rectangle.
- * @param x The x coordinate of the top left corner.
- * @param y The y coordinate of the top left corner.
- * @param width The width of the rectangle.
- * @param height The height of the rectangle.
- */
-void
-stroke_rect(int x, int y, uint32_t width, uint32_t height)
-{
-	SDL_Rect rect;
-
-	rect.x = x;
-	rect.y = y;
-	rect.w = width;
-	rect.h = height;
-
-	SDL_RenderDrawRect(renderer, &rect);
-}
-
-/**
  * @brief Draws a filled rectangle.
  * @param x The x coordinate of the top left corner.
  * @param y The y coordinate of the top left corner.
@@ -73,11 +53,58 @@ fill_rect(int x, int y, uint32_t width, uint32_t height)
 	SDL_RenderFillRect(renderer, &rect);
 }
 
+/**
+ * @brief Draws a stroked rectangle.
+ * @param x The x coordinate of the top left corner.
+ * @param y The y coordinate of the top left corner.
+ * @param width The width of the rectangle.
+ * @param height The height of the rectangle.
+ * @param thickness The line tickness of the rectangle.
+ */
+void
+stroke_rect(int x, int y, uint32_t width, uint32_t height, uint32_t thickness)
+{
+	uint32_t offset = thickness / 2;
+
+	int x_left = x - offset;
+
+	int y_top = y - offset;
+	int y_bottom = y + offset;
+
+	// Top line
+
+	fill_rect(x_left, y_top, width + thickness, thickness);
+
+	// Bottom line
+
+	fill_rect(x_left, y_top + height, width + thickness, thickness);
+
+	// Left line
+
+	fill_rect(x_left, y_bottom, thickness, height);
+
+	// Right line
+
+	fill_rect(x_left + width, y_bottom, thickness, height);
+}
+
 struct Point
 {
 	int x;
 	int y;
 };
+
+/**
+ * @brief Translates an in-game coordinate to a physical pixel coordinate.
+ */
+struct Point
+translate(float x, float y);
+
+/**
+ * @brief Translates a physical pixel coordinate back to an in-game coordinate.
+ */
+struct Point
+untranslate(int x, int y);
 
 /**
  * @brief Rotates a point around an origin point with an angle.
