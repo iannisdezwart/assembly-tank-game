@@ -12,13 +12,17 @@ struct Tank
 	float rot;
 };
 
+/**
+ * @brief Renders one tank instance.
+ * @param tank The tank to render. This struct contains the x, y and rotation.
+ */
 void
 render_tank(struct Tank *tank)
 {
 	// Draw gun
 
 	set_colour_rgb(TANK_GUN_COLOUR);
-	stroke_rotated_rect(tank->x + TANK_BODY_RADIUS, tank->y - TANK_GUN_HEIGHT / 2,
+	filled_rotated_rect(tank->x + TANK_BODY_RADIUS, tank->y - TANK_GUN_HEIGHT / 2,
 		TANK_GUN_WIDTH, TANK_GUN_HEIGHT, tank->rot, tank->x, tank->y);
 
 	// Draw body

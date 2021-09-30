@@ -1,5 +1,5 @@
 /**
- * Returns the number of microseconds since EPOCH.
+ * @returns The number of microseconds since EPOCH.
  */
 uint64_t
 now(void)

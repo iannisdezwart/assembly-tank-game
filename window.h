@@ -6,8 +6,16 @@ uint32_t frame_time_usec;
 SDL_Window *window;
 SDL_Renderer *renderer;
 
+/**
+ * @brief Sets up the window.
+ * SDL and the TTF engine are started, the window is created, and
+ * the renderer is initialised.
+ * Some vital global variables such as the width, height and refresh rate
+ * of the screen are initialised too.
+ * @warning Use `cleanup_window()` to free the memory used for the window.
+ */
 void
-create_fullscreen_window()
+setup_fullscreen_window(void)
 {
 	SDL_DisplayMode display_mode;
 
