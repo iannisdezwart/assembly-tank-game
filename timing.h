@@ -8,3 +8,55 @@ now(void)
 	gettimeofday(&tv, NULL);
 	return tv.tv_sec * (uint64_t) 1000000 + tv.tv_usec;
 }
+
+#define FPS_CALC_FRAMES 5
+
+uint64_t frame_times[FPS_CALC_FRAMES];
+size_t frame_times_index;
+float fps;
+
+/**
+ * @brief Computes the average FPS for the last `FPS_CALC_FRAMES` frames.
+ * The FPS is stored in the global `fps` variable.
+ */
+void
+compute_avg_fps(void)
+{
+	uint64_t avg_frame_time = 0;
+
+	for (size_t i = 1; i < FPS_CALC_FRAMES; i++)
+	{
+		avg_frame_time += frame_times[i] - frame_times[i - 1];
+	}
+
+	avg_frame_time /= (FPS_CALC_FRAMES - 1);
+	fps = 1E6 / (double) avg_frame_time;
+}
+
+/**
+ *  @brief Initialises the frame_times array.
+ */
+void
+init_frame_times_array(void)
+{
+	frame_times[0] = now();
+	frame_times_index = 1;
+	fps = 0;
+}
+
+/**
+ * @brief Adds a frame time record to the frame_times array.
+ * @param time The current time.
+ */
+void
+add_frame_time(uint64_t time)
+{
+	if (frame_times_index == FPS_CALC_FRAMES)
+	{
+		compute_avg_fps();
+		frame_times[0] = frame_times[FPS_CALC_FRAMES - 1];
+		frame_times_index = 1;
+	}
+
+	frame_times[frame_times_index++] = time;
+}
