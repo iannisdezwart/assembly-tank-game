@@ -6,10 +6,14 @@
 #include <sys/time.h>
 
 #include "window.h"
+#include "timing.h"
 #include "assets.h"
 #include "graphics.h"
 #include "tank.h"
-#include "timing.h"
+#include "map.h"
+#include "bullet.h"
+#include "player.h"
+#include "render.h"
 #include "io.h"
 
 int

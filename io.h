@@ -1,7 +1,5 @@
-struct Tank player;
-
-int mouse_x;
-int mouse_y;
+int raw_mouse_x;
+int raw_mouse_y;
 
 /**
  * @brief Initialises some variables used in the `handle_events()` function.
@@ -9,62 +7,14 @@ int mouse_y;
 void
 setup_io(void)
 {
-	player.x = 250;
-	player.y = 200;
+	player.x = MAP_WIDTH / 2;
+	player.y = MAP_HEIGHT / 2;
 	player.rot = 0;
 
-	mouse_y = player.y;
-	mouse_x = INT32_MAX;
+	raw_mouse_y = MAP_HEIGHT / 2;
+	raw_mouse_x = INT32_MAX;
 
-	init_frame_times_array();
-}
-
-/**
- * @brief Renders the next frame of the game.
- */
-void
-render(void)
-{
-	char fps_str[16];
-
-	// White background
-
-	set_colour_rgb(0xFF, 0xFF, 0xFF);
-	fill_rect(0, 0, width, height);
-
-	// Red filled rectangle
-
-	set_colour_rgb(0xFF, 0x00, 0x00);
-	fill_rect(100, 100, 300, 200);
-
-	// Green stroked rectangle
-
-	set_colour_rgb(0x00, 0xFF, 0x00);
-	stroke_rect(50, 50, 400, 300);
-
-	// Blue stroked circle
-
-	set_colour_rgb(0x00, 0x00, 0xFF);
-	stroke_circle(250, 200, 75);
-
-	// Pink filled circle
-
-	set_colour_rgb(0xFF, 0x00, 0xFF);
-	fill_circle(250, 200, 50);
-
-	// Render player tank
-
-	render_tank(&player);
-
-	// Write FPS counter
-
-	snprintf(fps_str, sizeof(fps_str), "%05.1f FPS", fps);
-	set_colour_rgb(0xFF, 0x00, 0x00);
-	render_text(font_20px, fps_str, 0, 0);
-
-	// Render the frame
-
-	render_frame();
+	init_timings();
 }
 
 /**
@@ -80,8 +30,7 @@ handle_events(void)
 	uint64_t duration;
 	int64_t delay;
 
-	int pointer_dx;
-	int pointer_dy;
+	struct Point pointer;
 
 	int8_t move_up = 0;
 	int8_t move_down = 0;
@@ -118,6 +67,10 @@ handle_events(void)
 						move_right = 1;
 						break;
 
+					case SDL_SCANCODE_SPACE:
+						add_bullet(player.x, player.y, player.rot);
+						break;
+
 					default:
 						break;
 				}
@@ -150,28 +103,26 @@ handle_events(void)
 				break;
 
 			case SDL_MOUSEMOTION:
-				mouse_x = e.motion.x;
-				mouse_y = e.motion.y;
+				raw_mouse_x = e.motion.x;
+				raw_mouse_y = e.motion.y;
 
 				break;
 		}
 	}
 
-	// Move
+	clear_screen();
+	render_border();
 
-	player.x += move_right - move_left;
-	player.y += move_down - move_up;
+	// Get relative mouse position to player
 
-	// Rotate
+	pointer = untranslate(raw_mouse_x, raw_mouse_y);
 
-	pointer_dx = mouse_x - player.x;
-	pointer_dy = mouse_y - player.y;
+	update_player(move_right - move_left, move_down - move_up,
+		pointer.x - player.x, pointer.y - player.y);
 
-	player.rot = atan2(pointer_dy, pointer_dx);
-
-	// Render
-
-	render();
+	update_bullets();
+	render_fps_counter();
+	render_frame();
 
 	// Schedule next frame
 
