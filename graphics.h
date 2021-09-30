@@ -209,3 +209,37 @@ fill_circle(int x_centre, int y_centre, uint32_t radius)
 		}
 	}
 }
+
+/**
+ * @brief Renders text onto the frame.
+ * @param font The font to use.
+ * @param text The text to write.
+ * @param x The x coordinate of the location to render to.
+ * @param y The y coordinate of the location to render to.
+ */
+void
+render_text(Font *font, const char *text, int x, int y)
+{
+	SDL_Color colour;
+	SDL_Surface *text_surface;
+	SDL_Texture *text_texture;
+	SDL_Rect text_texture_rect;
+
+	int text_width;
+	int text_height;
+
+	SDL_GetRenderDrawColor(renderer, &colour.r, &colour.g, &colour.b, &colour.a);
+	TTF_SizeText(font, text, &text_width, &text_height);
+
+	text_surface = TTF_RenderText_Blended(font, text, colour);
+	text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+	text_texture_rect.x = x;
+	text_texture_rect.y = y;
+	text_texture_rect.w = text_width;
+	text_texture_rect.h = text_height;
+
+	SDL_RenderCopy(renderer, text_texture, NULL, &text_texture_rect);
+
+	SDL_FreeSurface(text_surface);
+	SDL_DestroyTexture(text_texture);
+}
