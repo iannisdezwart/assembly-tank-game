@@ -55,12 +55,25 @@ setup_fullscreen_window(void)
 	{
 		fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
 	}
+
+	// Initialise the TTF engine
+
+	if (TTF_Init() < 0)
+	{
+		fprintf(stderr, "Error initialising TTF engine: %s\n", SDL_GetError());
+		exit(1);
+	}
 }
 
+/**
+ * @brief Frees memory used for the window and renderer, and stops
+ * the SDL and TTF engine.
+ */
 void
-exit_window()
+cleanup_window(void)
 {
 	SDL_DestroyWindow(window);
 	SDL_DestroyRenderer(renderer);
+	TTF_Quit();
 	SDL_Quit();
 }
