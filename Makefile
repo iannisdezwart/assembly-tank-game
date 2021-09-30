@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -O3 -Wall -lSDL2 -lm
+CFLAGS = -g -O3 -Wall -lSDL2 -lSDL2_ttf -lm
 
 .PHONY: main
 main: main.c
