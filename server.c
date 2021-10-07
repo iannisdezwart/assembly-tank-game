@@ -247,58 +247,66 @@ broadcast_except(struct Client *clients, struct Client *skip_client,
  * @brief Handles incoming messages to the server.
  * @param clients A pointer to the clients array.
  * @param client A pointer to the client that sent the data.
- * @param buf Contains the read data.
- * @param buf_size Number of bytes on the buffer.
+ * @param read_buf Contains the read data.
+ * @param read_buf_size Number of bytes on the buffer.
  */
 void
 handle_incoming_data(struct Client *clients, struct Client *client,
-	char *buf, size_t buf_size)
+	char *read_buf, size_t read_buf_size)
 {
 	enum ClientMessageType msg_type;
-	char *ptr = buf;
+	char *read_ptr = read_buf;
+	char *write_buf;
+	char *write_ptr;
 
-	while (buf_size > 0)
+	while (read_buf_size > 0)
 	{
-		msg_type = read_u8(&ptr);
+		msg_type = read_u8(&read_ptr);
 
 		switch (msg_type)
 		{
 			case CMT_PLAYER_POS:
-				if (buf_size < 13)
+				if (read_buf_size < 13)
 				{
 					fprintf(stderr,
 						"Received a CMT_PLAYER_POS message of invalid length %lu\n",
-						buf_size);
+						read_buf_size);
 
-					fprintf(stderr, "Message: %.*s\n", (int) buf_size, buf);
+					fprintf(stderr, "Message: %.*s\n", (int) read_buf_size, read_buf);
 
 					break;
 				}
 
-				client->player_x = read_f32(&ptr);
-				client->player_y = read_f32(&ptr);
-				client->player_rot = read_f32(&ptr);
+				client->player_x = read_f32(&read_ptr);
+				client->player_y = read_f32(&read_ptr);
+				client->player_rot = read_f32(&read_ptr);
 
-				buf_size -= 13;
+				read_buf_size -= 13;
 				break;
 
 			case CMT_SHOOT_BULLET:
-				if (buf_size < 13)
+				if (read_buf_size < 13)
 				{
 					fprintf(stderr,
 						"Received a CMT_SHOOT_BULLET message of invalid length %lu\n",
-						buf_size);
+						read_buf_size);
 
-					fprintf(stderr, "Message: %.*s\n", (int) buf_size, buf);
+					fprintf(stderr, "Message: %.*s\n", (int) read_buf_size, read_buf);
 
 					break;
 				}
 
-				ptr[-1] = SMT_SPAWN_BULLET;
-				broadcast_except(clients, client, ptr, 13);
+				write_buf = malloc(13);
+				write_ptr = write_buf;
 
-				ptr += 12;
-				buf_size -= 13;
+				write_u8(&write_ptr, SMT_SPAWN_BULLET);
+				write_f32(&write_ptr, read_f32(&read_ptr));
+				write_f32(&write_ptr, read_f32(&read_ptr));
+				write_f32(&write_ptr, read_f32(&read_ptr));
+
+				broadcast_except(clients, client, write_buf, 13);
+
+				read_buf_size -= 13;
 				break;
 
 			default:
