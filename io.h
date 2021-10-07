@@ -174,12 +174,14 @@ handle_events(void)
 			case SMT_PLAYER_POSITIONS:
 				if (read_buf_size < (sizeof(player_t) + 1))
 				{
-					fputs("Received a SMT_SPAWN_BULLET message of invalid length\n",
+					fputs("Received a SMT_PLAYER_POSITIONS message of invalid length\n",
 						stderr);
 					break;
 				}
 
-				// Increase to support more than 256 clients
+				puts("got SMT_PLAYER_POSITIONS");
+
+				// Increase to support more than 255 clients
 
 				num_clients = read_u8(&read_ptr);
 				delete_other_players();
@@ -201,6 +203,8 @@ handle_events(void)
 						stderr);
 					break;
 				}
+
+				puts("got SMT_SPAWN_BULLET");
 
 				add_bullet(
 					/*    x    */ read_f32(&read_ptr),

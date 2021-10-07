@@ -17,7 +17,7 @@
 
 #define PORT 4242
 
-#define MAX_CLIENTS 256 // Also change `MAX_PLAYERS` in `player.h`
+#define MAX_CLIENTS 255 // Also change `MAX_PLAYERS` in `player.h`
 #define client_t uint8_t
 #define READ_BUF_SIZE 4096
 #define IDLE_TIMEOUT_USEC 10000
@@ -442,12 +442,12 @@ send_player_positions(struct Client *clients, struct Client *client)
 	char *ptr = buf;
 	size_t buf_size = 1;
 
-	#if MAX_CLIENTS > 256
-	#error To support more than 256 clients, \
+	#if MAX_CLIENTS > 255
+	#error To support more than 255 clients, \
 		read the comment below this line first
 	#endif
 
-	// Follow the "Increase to support more than 256 clients" comments in all
+	// Follow the "Increase to support more than 255 clients" comments in all
 	// files of this project
 
 	client_t num_clients = 0;
