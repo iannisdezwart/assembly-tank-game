@@ -53,7 +53,7 @@ read_u64(char **ptr)
 float
 read_f32(char **ptr)
 {
-	float data = **ptr;
+	float data = *(float *) *ptr;
 	*ptr += 4;
 	return data;
 }
@@ -65,7 +65,7 @@ read_f32(char **ptr)
 double
 read_f64(char **ptr)
 {
-	double data = **ptr;
+	double data = *(double *) *ptr;
 	*ptr += 8;
 	return data;
 }
@@ -126,8 +126,8 @@ write_u64(char **ptr, uint64_t data)
 void
 write_f32(char **ptr, float data)
 {
-	**ptr = data;
-	ptr += 4;
+	*(float *) *ptr = data;
+	*ptr += 4;
 }
 
 /**
@@ -136,8 +136,8 @@ write_f32(char **ptr, float data)
  * @param data The data to write.
  */
 void
-write_f64(char **ptr, float data)
+write_f64(char **ptr, double data)
 {
-	**ptr = data;
-	ptr += 8;
+	*(double *) *ptr = data;
+	*ptr += 8;
 }
