@@ -63,6 +63,30 @@ write_to_socket(int socket_fd, char *buf, size_t buf_size)
 }
 
 /**
+ * @brief Reads from the server.
+ * @param socket_fd The file descriptor of the client socket.
+ * @param buf A pointer to the buffer to write.
+ * @param buf_size The size of the buffer in bytes.
+ */
+size_t
+read_from_socket(int socket_fd, char *buf, size_t buf_size)
+{
+	ssize_t bytes_read = read(socket_fd, buf, buf_size);
+
+	if (bytes_read < 0)
+	{
+		if (errno != EWOULDBLOCK && errno != EAGAIN)
+		{
+			fprintf(stderr, "Wasn't able to read from server\n");
+		}
+
+		bytes_read = 0;
+	}
+
+	return bytes_read;
+}
+
+/**
  * @brief Closes the client socket.
  */
 void

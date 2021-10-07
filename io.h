@@ -45,7 +45,7 @@ handle_events(void)
 
 	char read_buf[READ_BUF_SIZE];
 	char *read_ptr;
-	ssize_t bytes_rw;
+	ssize_t read_buf_size;
 	enum ServerMessageType msg_type;
 
 	next_event:
@@ -160,45 +160,37 @@ handle_events(void)
 
 	// Read socket
 
-	bytes_rw = read(socket_fd, read_buf, READ_BUF_SIZE);
+	read_buf_size = read_from_socket(socket_fd, read_buf, READ_BUF_SIZE);
 	read_ptr = read_buf;
 
-	if (bytes_rw < 0)
+	while (read_buf_size > 0)
 	{
-		if (errno != EWOULDBLOCK && errno != EAGAIN)
+		msg_type = read_u8(&read_ptr);
+
+		switch (msg_type)
 		{
-			fprintf(stderr, "Wasn't able to read from socket\n");
-		}
+			case SMT_SPAWN_BULLET:
+				if (read_buf_size < 13)
+				{
+					fputs("Received a SMT_SPAWN_BULLET message of invalid length\n",
+						stderr);
+					break;
+				}
 
-		goto skip_read_socket;
-	}
+				add_bullet(
+					/*    x    */ read_f32(&read_ptr),
+					/*    y    */ read_f32(&read_ptr),
+					/* heading */ read_f32(&read_ptr));
 
-	msg_type = read_u8(&read_ptr);
-
-	switch (msg_type)
-	{
-		case SMT_SPAWN_BULLET:
-			if (bytes_rw != 13)
-			{
-				fputs("Received a SMT_SPAWN_BULLET message of invalid length\n",
-					stderr);
+				read_buf_size -= 13;
 				break;
-			}
 
-			add_bullet(
-				/*    x    */ read_f32(&read_ptr),
-				/*    y    */ read_f32(&read_ptr),
-				/* heading */ read_f32(&read_ptr));
-
-			break;
-
-		default:
-			fprintf(stderr, "Received unknown message from server of type %hhu\n",
-				msg_type);
-			break;
+			default:
+				fprintf(stderr, "Received unknown message from server of type %hhu\n",
+					msg_type);
+				break;
+		}
 	}
-
-	skip_read_socket:
 
 	// Schedule next frame
 
