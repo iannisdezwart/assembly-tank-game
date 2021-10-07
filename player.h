@@ -1,6 +1,11 @@
 #define PLAYER_SPEED 0.03
+#define MAX_PLAYERS 256 // Also change `MAX_CLIENTS` in `server.c`
+#define player_t uint8_t
 
 struct Tank player;
+struct Tank other_players[MAX_PLAYERS - 1];
+player_t num_other_players = 0;
+
 
 /**
  * @brief Translates an in-game coordinate to a pixel on the screen.
@@ -94,10 +99,44 @@ send_position_tick(void)
 	char buf[13];
 	char *ptr = buf;
 
-	write_u8(&ptr, CMT_PLAYER_POS);
+	write_u8(&ptr, CMT_PLAYER_POSITION);
 	write_f32(&ptr, player.x);
 	write_f32(&ptr, player.y);
 	write_f32(&ptr, player.rot);
 
 	write_to_socket(socket_fd, buf, sizeof(buf));
+}
+
+/**
+ * @brief Discards all entries in the `other_players` array.
+ */
+void
+delete_other_players(void)
+{
+	num_other_players = 0;
+}
+
+/**
+ * @brief Adds a player to the `other_players` array.
+ */
+void
+add_other_player(float x, float y, float rot)
+{
+	other_players[num_other_players].x = x;
+	other_players[num_other_players].y = y;
+	other_players[num_other_players].rot = rot;
+
+	num_other_players++;
+}
+
+/**
+ * @brief Renders the other players.
+ */
+void
+update_other_players(void)
+{
+	for (player_t i = 0; i < num_other_players; i++)
+	{
+		render_tank(other_players + i);
+	}
 }

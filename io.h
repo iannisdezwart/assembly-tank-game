@@ -47,6 +47,7 @@ handle_events(void)
 	char *read_ptr;
 	ssize_t read_buf_size;
 	enum ServerMessageType msg_type;
+	player_t num_clients;
 
 	next_event:
 
@@ -135,6 +136,7 @@ handle_events(void)
 	update_player(move_right - move_left, move_down - move_up,
 		pointer.x - player.x, pointer.y - player.y);
 
+	update_other_players();
 	update_bullets();
 	render_fps_counter();
 	render_frame();
@@ -169,6 +171,29 @@ handle_events(void)
 
 		switch (msg_type)
 		{
+			case SMT_PLAYER_POSITIONS:
+				if (read_buf_size < (sizeof(player_t) + 1))
+				{
+					fputs("Received a SMT_SPAWN_BULLET message of invalid length\n",
+						stderr);
+					break;
+				}
+
+				// Increase to support more than 256 clients
+
+				num_clients = read_u8(&read_ptr);
+				delete_other_players();
+
+				for (player_t i = 0; i < num_clients; i++)
+				{
+					add_other_player(
+						/*  x  */ read_f32(&read_ptr),
+						/*  y  */ read_f32(&read_ptr),
+						/* rot */ read_f32(&read_ptr));
+				}
+
+				break;
+
 			case SMT_SPAWN_BULLET:
 				if (read_buf_size < 13)
 				{

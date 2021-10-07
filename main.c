@@ -19,6 +19,7 @@
 #include "network_messages.h"
 #include "window.h"
 #include "timing.h"
+#include "frame_timing.h"
 #include "assets.h"
 #include "graphics.h"
 #include "tank.h"

@@ -1,10 +1,11 @@
 enum ClientMessageType
 {
-	CMT_PLAYER_POS,
+	CMT_PLAYER_POSITION,
 	CMT_SHOOT_BULLET
 };
 
 enum ServerMessageType
 {
+	SMT_PLAYER_POSITIONS,
 	SMT_SPAWN_BULLET
 };

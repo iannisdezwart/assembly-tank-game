@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
@@ -8,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "timing.h"
 #include "network_messages.h"
 #include "buffer.h"
 #include "socket_tools.h"
@@ -15,9 +17,11 @@
 
 #define PORT 4242
 
-#define MAX_CLIENTS 256
+#define MAX_CLIENTS 256 // Also change `MAX_PLAYERS` in `player.h`
+#define client_t uint8_t
 #define READ_BUF_SIZE 4096
 #define IDLE_TIMEOUT_USEC 10000
+#define USEC_PER_SERVER_TICK 100000
 
 #define die(msg) do { \
 	fprintf(stderr, msg ": %s\n", \
@@ -214,7 +218,7 @@ queue_write(struct Client *client, char *buf, size_t buf_size)
 void
 broadcast(struct Client *clients, char *buf, size_t buf_size)
 {
-	for (size_t i = 0; i < MAX_CLIENTS; i++)
+	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (clients[i].fd != 0)
 		{
@@ -234,7 +238,7 @@ void
 broadcast_except(struct Client *clients, struct Client *skip_client,
 	char *buf, size_t buf_size)
 {
-	for (size_t i = 0; i < MAX_CLIENTS; i++)
+	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (clients[i].fd != 0 && clients + i != skip_client)
 		{
@@ -265,11 +269,11 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 
 		switch (msg_type)
 		{
-			case CMT_PLAYER_POS:
+			case CMT_PLAYER_POSITION:
 				if (read_buf_size < 13)
 				{
 					fprintf(stderr,
-						"Received a CMT_PLAYER_POS message of invalid length %lu\n",
+						"Received a CMT_PLAYER_POSITION message of invalid length %lu\n",
 						read_buf_size);
 
 					fprintf(stderr, "Message: %.*s\n", (int) read_buf_size, read_buf);
@@ -427,12 +431,59 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 }
 
 /**
+ * @brief Sends a client all other players' positions.
+ * @param clients A pointer to the clients array.
+ * @param client A pointer to the client we're sending the positions to.
+ */
+void
+send_player_positions(struct Client *clients, struct Client *client)
+{
+	char *buf = malloc(1 + 10 * MAX_CLIENTS);
+	char *ptr = buf;
+	size_t buf_size = 1;
+
+	#if MAX_CLIENTS > 256
+	#error To support more than 256 clients, \
+		read the comment below this line first
+	#endif
+
+	// Follow the "Increase to support more than 256 clients" comments in all
+	// files of this project
+
+	client_t num_clients = 0;
+
+	write_u8(&ptr, SMT_PLAYER_POSITIONS);
+	ptr += sizeof(client_t); // Leave room for the number of clients
+
+	for (client_t i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (clients[i].fd != 0)
+		{
+			write_f32(&ptr, clients[i].player_x);
+			write_f32(&ptr, clients[i].player_y);
+			write_f32(&ptr, clients[i].player_rot);
+
+			buf_size += 12;
+			num_clients++;
+		}
+	}
+
+	// Write the number of clients
+
+	*(client_t *) (buf + 1) = num_clients;
+
+	queue_write(client, buf, buf_size);
+}
+
+/**
  * @brief Accepts any new connections and handles IO.
  * @param server_fd The server's file descriptor.
  */
 void
 serve(int server_fd)
 {
+	uint64_t latest_server_tick_time;
+
 	struct Client clients[MAX_CLIENTS] = { 0 };
 	size_t client_index = 0;
 
@@ -441,6 +492,8 @@ serve(int server_fd)
 	socklen_t client_address_size = sizeof(client_address);
 
 	uint8_t done_anything;
+
+	latest_server_tick_time = now();
 
 	while (1)
 	{
@@ -482,12 +535,26 @@ serve(int server_fd)
 
 		// If there is IO, handle it
 
-		for (size_t i = 0; i < MAX_CLIENTS; i++)
+		for (client_t i = 0; i < MAX_CLIENTS; i++)
 		{
 			if (clients[i].fd != 0)
 			{
 				if (handle_io(clients, clients + i, &client_index))
 				{
+					done_anything = 1;
+				}
+			}
+		}
+
+		// Broadcast player positions to clients
+
+		if (now() - latest_server_tick_time >= USEC_PER_SERVER_TICK)
+		{
+			for (client_t i = 0; i < MAX_CLIENTS; i++)
+			{
+				if (clients[i].fd != 0)
+				{
+					send_player_positions(clients, clients + i);
 					done_anything = 1;
 				}
 			}
