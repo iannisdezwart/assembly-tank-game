@@ -438,7 +438,7 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 void
 send_player_positions(struct Client *clients, struct Client *client)
 {
-	char *buf = malloc(1 + 10 * MAX_CLIENTS);
+	char *buf = malloc(1 + sizeof(client_t) + 12 * MAX_CLIENTS);
 	char *ptr = buf;
 	size_t buf_size = 1;
 
@@ -457,7 +457,7 @@ send_player_positions(struct Client *clients, struct Client *client)
 
 	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (clients[i].fd != 0)
+		if (clients[i].fd != 0 && clients + i != client)
 		{
 			write_f32(&ptr, clients[i].player_x);
 			write_f32(&ptr, clients[i].player_y);
@@ -468,9 +468,18 @@ send_player_positions(struct Client *clients, struct Client *client)
 		}
 	}
 
+	if (num_clients == 0)
+	{
+		// There is only one player, so we won't send it an empty array
+
+		free(buf);
+		return;
+	}
+
 	// Write the number of clients
 
 	*(client_t *) (buf + 1) = num_clients;
+	buf_size++;
 
 	queue_write(client, buf, buf_size);
 }
@@ -555,6 +564,7 @@ serve(int server_fd)
 				if (clients[i].fd != 0)
 				{
 					send_player_positions(clients, clients + i);
+					latest_server_tick_time = now();
 					done_anything = 1;
 				}
 			}

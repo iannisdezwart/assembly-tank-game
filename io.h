@@ -179,8 +179,6 @@ handle_events(void)
 					break;
 				}
 
-				puts("got SMT_PLAYER_POSITIONS");
-
 				// Increase to support more than 255 clients
 
 				num_clients = read_u8(&read_ptr);
@@ -194,6 +192,7 @@ handle_events(void)
 						/* rot */ read_f32(&read_ptr));
 				}
 
+				read_buf_size -= 1 + sizeof(player_t) + 12 * num_clients;
 				break;
 
 			case SMT_SPAWN_BULLET:
@@ -203,8 +202,6 @@ handle_events(void)
 						stderr);
 					break;
 				}
-
-				puts("got SMT_SPAWN_BULLET");
 
 				add_bullet(
 					/*    x    */ read_f32(&read_ptr),
