@@ -6,11 +6,14 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <errno.h>
 
+#include "buffer.h"
 #include "network.h"
+#include "network_messages.h"
 #include "window.h"
 #include "timing.h"
 #include "assets.h"
@@ -30,6 +33,7 @@ main(int argc, char **argv)
 	setup_fullscreen_window();
 	setup_assets();
 	setup_io();
+	setup_socket();
 
 	// Main loop
 
@@ -39,6 +43,7 @@ main(int argc, char **argv)
 
 	cleanup_window();
 	cleanup_assets();
+	cleanup_socket();
 
 	return 0;
 }

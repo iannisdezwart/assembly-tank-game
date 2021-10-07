@@ -124,6 +124,13 @@ handle_events(void)
 	render_fps_counter();
 	render_frame();
 
+	// Update player position
+
+	if (start_time - last_server_tick_time >= USEC_PER_SERVER_TICK)
+	{
+		send_position_tick();
+	}
+
 	// Schedule next frame
 
 	finish_time = now();

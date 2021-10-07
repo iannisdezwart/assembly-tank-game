@@ -2,6 +2,11 @@
 
 struct Tank player;
 
+/**
+ * @brief Translates an in-game coordinate to a pixel on the screen.
+ * @param x The in-game x coordinate.
+ * @param y The in-game y coordinate.
+ */
 struct Point
 translate(float x, float y)
 {
@@ -13,6 +18,11 @@ translate(float x, float y)
 	return point;
 }
 
+/**
+ * @brief Translates a pixel coordinate to the in-game coordinate.
+ * @param x The x coordinate of the pixel.
+ * @param y The y coordinate of the pixel.
+ */
 struct Point
 untranslate(int x, int y)
 {
@@ -24,6 +34,13 @@ untranslate(int x, int y)
 	return point;
 }
 
+/**
+ * @brief Updates the position and rotation of the player and renders it.
+ * @param dx The change in x of the tank.
+ * @param dy The change in y of the tank.
+ * @param pointer_dx The change in x of the pointer.
+ * @param pointer_dy The change in y of the pointer.
+ */
 void
 update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy)
 {
@@ -66,4 +83,21 @@ update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy)
 	// Render player
 
 	render_tank(&player);
+}
+
+/**
+ * @brief Sends the current player position to the server.
+ */
+void
+send_position_tick(void)
+{
+	char buf_arr[13];
+	char *buf = buf_arr;
+
+	write_u8(&buf, CMT_PLAYER_POS);
+	write_f32(&buf, player.x);
+	write_f32(&buf, player.y);
+	write_f32(&buf, player.rot);
+
+	write(socket_fd, buf, sizeof(buf));
 }

@@ -16,6 +16,7 @@ uint64_t frame_times[FPS_CALC_FRAMES];
 size_t frame_times_index;
 float fps;
 float dt;
+uint64_t last_server_tick_time;
 
 /**
  * @brief Computes the average FPS for the last `FPS_CALC_FRAMES` frames.
@@ -41,10 +42,13 @@ compute_avg_fps(void)
 void
 init_timings(void)
 {
-	frame_times[0] = now();
+	uint64_t cur_time = now();
+
+	frame_times[0] = cur_time;
 	frame_times_index = 1;
 	fps = 0;
 	dt = 0;
+	last_server_tick_time = cur_time;
 }
 
 /**
@@ -68,3 +72,5 @@ add_frame_time(uint64_t time)
 
 	frame_times_index++;
 }
+
+#define USEC_PER_SERVER_TICK 100000
