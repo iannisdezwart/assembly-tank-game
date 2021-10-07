@@ -167,7 +167,7 @@ handle_events(void)
 	{
 		if (errno != EWOULDBLOCK && errno != EAGAIN)
 		{
-			fprintf(stderr, "Wasn't able to read from socket %d\n");
+			fprintf(stderr, "Wasn't able to read from socket\n");
 		}
 
 		goto skip_read_socket;
@@ -193,7 +193,8 @@ handle_events(void)
 			break;
 
 		default:
-			fprintf("Received unknown message from server of type %hhu\n", msg_type);
+			fprintf(stderr, "Received unknown message from server of type %hhu\n",
+				msg_type);
 			break;
 	}
 
