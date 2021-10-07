@@ -85,8 +85,6 @@ copy_bullet(struct Bullet *src, struct Bullet *dst)
 void
 update_bullets(void)
 {
-	printf("there are %lu bullets\n", n_bullets);
-
 	struct Bullet *bullet;
 	int new_i = 0;
 
