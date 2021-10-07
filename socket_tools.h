@@ -32,8 +32,12 @@ set_no_delay(int socket_fd)
 {
 	int flag = 1;
 
+	#ifdef TCP_NODELAY
 	setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+	#endif
+	#ifdef TCP_CORK
 	setsockopt(socket_fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(flag));
+	#endif
 }
 
 /**
@@ -49,11 +53,19 @@ flush_socket(int socket_fd)
 {
 	int flag = 0;
 
+	#ifdef TCP_CORK
 	setsockopt(socket_fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(flag));
+	#endif
+	#ifdef TCP_NODELAY
 	setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+	#endif
 
 	flag = 1;
 
+	#ifdef TCP_CORK
 	setsockopt(socket_fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(flag));
+	#endif
+	#ifdef TCP_NODELAY
 	setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
+	#endif
 }
