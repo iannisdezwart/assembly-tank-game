@@ -9,11 +9,12 @@
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <errno.h>
 
 #include "buffer.h"
-#include "non-blocking.h"
+#include "socket_tools.h"
 #include "network.h"
 #include "network_messages.h"
 #include "window.h"

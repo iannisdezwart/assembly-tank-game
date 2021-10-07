@@ -38,7 +38,10 @@ setup_socket(void)
 			strerror(errno));
 	}
 
+	// Set socket options
+
 	set_nonblocking(socket_fd);
+	set_no_delay(socket_fd);
 }
 
 /**
@@ -55,6 +58,8 @@ write_to_socket(int socket_fd, char *buf, size_t buf_size)
 		fprintf(stderr, "Failed to write %ld bytes to the client socket: %s\n",
 			buf_size, strerror(errno));
 	}
+
+	flush_socket(socket_fd);
 }
 
 /**

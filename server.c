@@ -4,12 +4,13 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <string.h>
 #include <errno.h>
 
 #include "network_messages.h"
 #include "buffer.h"
-#include "non-blocking.h"
+#include "socket_tools.h"
 
 
 #define PORT 4242
@@ -36,13 +37,13 @@ int
 create_server(void)
 {
 	int server_fd;
-	int one = 1;
+	int flag = 1;
 
 	struct sockaddr_in server_address;
 
 	server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int)) < 0)
+	if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(int)) < 0)
 	{
 		fprintf(stderr, "Failed to set socket option SO_REUSEADDR\n");
 	}
@@ -63,7 +64,11 @@ create_server(void)
 	}
 
 	listen(server_fd, 20);
+
+	// Set socket options
+
 	set_nonblocking(server_fd);
+	set_no_delay(server_fd);
 
 	return server_fd;
 }
@@ -252,46 +257,57 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 	enum ClientMessageType msg_type;
 	char *ptr = buf;
 
-	if (buf_size == 0)
+	while (buf_size > 0)
 	{
-		return;
+		msg_type = read_u8(&ptr);
+
+		switch (msg_type)
+		{
+			case CMT_PLAYER_POS:
+				if (buf_size < 13)
+				{
+					fprintf(stderr,
+						"Received a CMT_PLAYER_POS message of invalid length %lu\n",
+						buf_size);
+
+					fprintf(stderr, "Message: %.*s\n", (int) buf_size, buf);
+
+					break;
+				}
+
+				client->player_x = read_f32(&ptr);
+				client->player_y = read_f32(&ptr);
+				client->player_rot = read_f32(&ptr);
+
+				buf_size -= 13;
+				break;
+
+			case CMT_SHOOT_BULLET:
+				if (buf_size < 13)
+				{
+					fprintf(stderr,
+						"Received a CMT_SHOOT_BULLET message of invalid length %lu\n",
+						buf_size);
+
+					fprintf(stderr, "Message: %.*s\n", (int) buf_size, buf);
+
+					break;
+				}
+
+				ptr[-1] = SMT_SPAWN_BULLET;
+				broadcast_except(clients, client, ptr, 13);
+
+				ptr += 12;
+				buf_size -= 13;
+				break;
+
+			default:
+				printf("Received unknown message of type %hhu\n", msg_type);
+				goto skip_all;
+		}
 	}
 
-	msg_type = read_u8(&ptr);
-
-	switch (msg_type)
-	{
-		case CMT_PLAYER_POS:
-			if (buf_size != 13)
-			{
-				fputs("Received a CMT_PLAYER_POS message of invalid length\n",
-					stderr);
-				break;
-			}
-
-			client->player_x = read_f32(&ptr);
-			client->player_y = read_f32(&ptr);
-			client->player_rot = read_f32(&ptr);
-
-			break;
-
-		case CMT_SHOOT_BULLET:
-			if (buf_size != 13)
-			{
-				fputs("Received a CMT_SHOOT_BULLET message of invalid length\n",
-					stderr);
-				break;
-			}
-
-			buf[0] = SMT_SPAWN_BULLET;
-			broadcast_except(clients, client, buf, buf_size);
-
-			break;
-
-		default:
-			printf("Received unknown message of type %hhu\n", msg_type);
-			break;
-	}
+	skip_all:;
 }
 
 /**
@@ -343,6 +359,8 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 
 		bytes_rw = write(client->fd, client->write_queue->buf,
 			client->write_queue->buf_size);
+
+		flush_socket(client->fd);
 
 		if (bytes_rw < 0)
 		{

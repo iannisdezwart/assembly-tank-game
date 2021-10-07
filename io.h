@@ -45,7 +45,7 @@ handle_events(void)
 
 	char read_buf[READ_BUF_SIZE];
 	char *read_ptr;
-	size_t bytes_rw;
+	ssize_t bytes_rw;
 	enum ServerMessageType msg_type;
 
 	next_event:
