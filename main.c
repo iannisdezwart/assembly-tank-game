@@ -6,12 +6,14 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <errno.h>
 
 #include "buffer.h"
+#include "non-blocking.h"
 #include "network.h"
 #include "network_messages.h"
 #include "window.h"

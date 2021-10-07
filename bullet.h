@@ -52,13 +52,13 @@ move_bullet(struct Bullet *bullet)
 
 /**
  * @brief Adds a new bullet struct to the bullet array.
+ * @param x The x coordinate of the starting position of the bullet.
+ * @param y The y coordinate of the starting position of the bullet.
+ * @param heading The heading of the bullet.
  */
 void
 add_bullet(float x, float y, float heading)
 {
-	x += (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * cos(heading);
-	y += (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * sin(heading);
-
 	bullets[n_bullets].x = x;
 	bullets[n_bullets].y = y;
 	bullets[n_bullets].heading = heading;
@@ -69,6 +69,8 @@ add_bullet(float x, float y, float heading)
 
 /**
  * @brief Copies a bullet.
+ * @param src The original bullet.
+ * @param dst The destination for the bullet.
  */
 void
 copy_bullet(struct Bullet *src, struct Bullet *dst)
@@ -117,4 +119,24 @@ update_bullets(void)
 	bullet = new_bullets;
 	new_bullets = bullets;
 	bullets = bullet;
+}
+
+/**
+ * @brief Messages the server that the client shot a bullet.
+ * @param x The x coordinate of the starting position of the bullet.
+ * @param y The y coordinate of the starting position of the bullet.
+ * @param heading The heading of the bullet.
+ */
+void
+send_bullet(float x, float y, float heading)
+{
+	char buf[13];
+	char *ptr = buf;
+
+	write_u8(&ptr, CMT_SHOOT_BULLET);
+	write_f32(&ptr, x);
+	write_f32(&ptr, y);
+	write_f32(&ptr, heading);
+
+	write_to_socket(socket_fd, buf, sizeof(buf));
 }

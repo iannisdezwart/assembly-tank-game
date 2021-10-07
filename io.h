@@ -1,3 +1,5 @@
+#define READ_BUF_SIZE 4096
+
 int raw_mouse_x;
 int raw_mouse_y;
 
@@ -37,6 +39,15 @@ handle_events(void)
 	int8_t move_left = 0;
 	int8_t move_right = 0;
 
+	int8_t shooting = 0;
+	float bullet_x;
+	float bullet_y;
+
+	char read_buf[READ_BUF_SIZE];
+	char *read_ptr;
+	size_t bytes_rw;
+	enum ServerMessageType msg_type;
+
 	next_event:
 
 	start_time = now();
@@ -68,7 +79,7 @@ handle_events(void)
 						break;
 
 					case SDL_SCANCODE_SPACE:
-						add_bullet(player.x, player.y, player.rot);
+						shooting = 1;
 						break;
 
 					default:
@@ -94,6 +105,10 @@ handle_events(void)
 
 					case SDL_SCANCODE_D:
 						move_right = 0;
+						break;
+
+					case SDL_SCANCODE_SPACE:
+						shooting = 0;
 						break;
 
 					default:
@@ -128,8 +143,61 @@ handle_events(void)
 
 	if (start_time - last_server_tick_time >= USEC_PER_SERVER_TICK)
 	{
+		last_server_tick_time = now();
 		send_position_tick();
 	}
+
+	// Shoot
+
+	if (shooting)
+	{
+		bullet_x = player.x + (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * cos(player.rot);
+		bullet_y = player.y + (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * sin(player.rot);
+
+		send_bullet(bullet_x, bullet_y, player.rot);
+		add_bullet(bullet_x, bullet_y, player.rot);
+	}
+
+	// Read socket
+
+	bytes_rw = read(socket_fd, read_buf, READ_BUF_SIZE);
+	read_ptr = read_buf;
+
+	if (bytes_rw < 0)
+	{
+		if (errno != EWOULDBLOCK && errno != EAGAIN)
+		{
+			fprintf(stderr, "Wasn't able to read from socket %d\n");
+		}
+
+		goto skip_read_socket;
+	}
+
+	msg_type = read_u8(&read_ptr);
+
+	switch (msg_type)
+	{
+		case SMT_SPAWN_BULLET:
+			if (bytes_rw != 13)
+			{
+				fputs("Received a SMT_SPAWN_BULLET message of invalid length\n",
+					stderr);
+				break;
+			}
+
+			add_bullet(
+				/*    x    */ read_f32(&read_ptr),
+				/*    y    */ read_f32(&read_ptr),
+				/* heading */ read_f32(&read_ptr));
+
+			break;
+
+		default:
+			fprintf("Received unknown message from server of type %hhu\n", msg_type);
+			break;
+	}
+
+	skip_read_socket:
 
 	// Schedule next frame
 

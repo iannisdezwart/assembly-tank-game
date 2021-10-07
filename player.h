@@ -91,13 +91,13 @@ update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy)
 void
 send_position_tick(void)
 {
-	char buf_arr[13];
-	char *buf = buf_arr;
+	char buf[13];
+	char *ptr = buf;
 
-	write_u8(&buf, CMT_PLAYER_POS);
-	write_f32(&buf, player.x);
-	write_f32(&buf, player.y);
-	write_f32(&buf, player.rot);
+	write_u8(&ptr, CMT_PLAYER_POS);
+	write_f32(&ptr, player.x);
+	write_f32(&ptr, player.y);
+	write_f32(&ptr, player.rot);
 
-	write(socket_fd, buf, sizeof(buf));
+	write_to_socket(socket_fd, buf, sizeof(buf));
 }

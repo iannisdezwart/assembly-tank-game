@@ -9,7 +9,6 @@ int socket_fd;
 void
 setup_socket(void)
 {
-	char buf[1024];
 	struct sockaddr_in server_addr;
 
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -39,10 +38,23 @@ setup_socket(void)
 			strerror(errno));
 	}
 
-	strcpy(buf, "Hello, World!");
-	send(socket_fd, buf, strlen(buf), 0);
-	read(socket_fd, buf, 1024);
-	printf("got a message from the server: %s\n", buf);
+	set_nonblocking(socket_fd);
+}
+
+/**
+ * @brief Writes to the server.
+ * @param socket_fd The file descriptor of the client socket.
+ * @param buf A pointer to the buffer to write.
+ * @param buf_size The size of the buffer in bytes.
+ */
+void
+write_to_socket(int socket_fd, char *buf, size_t buf_size)
+{
+	if (write(socket_fd, buf, buf_size) < 0)
+	{
+		fprintf(stderr, "Failed to write %ld bytes to the client socket: %s\n",
+			buf_size, strerror(errno));
+	}
 }
 
 /**

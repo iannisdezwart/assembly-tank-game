@@ -8,6 +8,8 @@
 #include <errno.h>
 
 #include "network_messages.h"
+#include "buffer.h"
+#include "non-blocking.h"
 
 
 #define PORT 4242
@@ -24,26 +26,6 @@
 
 #define new(type) (type *) malloc(sizeof(type))
 
-
-/**
- * @brief Puts a socket into non-blocking mode.
- * When an IO operation is performed and there is no IO, the socket will
- * not wait until there is new IO, but simply skip the operation.
- * @param socket_fd The socket to put into non-blocking mode.
- */
-int
-set_nonblocking(int socket_fd)
-{
-	int flags;
-
-	#ifdef O_NONBLOCK
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1) flags = 0;
-	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-	#else
-	flags = 1;
-	return ioctl(socket_fd, FIONBIO, &flags);
-	#endif
-}
 
 /**
  * @brief Creates a new socket for a server.
@@ -120,11 +102,17 @@ free_write_queue(struct WriteQueueNode *write_queue)
  * @brief Structure for a client connection.
  * @param fd The client's socket file descriptor.
  * @param write_queue A pointer to the head of the write queue.
+ * @param player_x The player's last known x location.
+ * @param player_y The player's last known y location.
+ * @param player_rot The player's last known rotation.
  */
 struct Client
 {
 	int fd;
 	struct WriteQueueNode *write_queue;
+	float player_x;
+	float player_y;
+	float player_rot;
 };
 
 /**
@@ -261,22 +249,49 @@ void
 handle_incoming_data(struct Client *clients, struct Client *client,
 	char *buf, size_t buf_size)
 {
+	enum ClientMessageType msg_type;
+	char *ptr = buf;
+
 	if (buf_size == 0)
 	{
 		return;
 	}
 
-	switch (buf[0])
+	msg_type = read_u8(&ptr);
+
+	switch (msg_type)
 	{
 		case CMT_PLAYER_POS:
-			printf("player pos: x = %.1f, y = %.1f, rot = %.1f\n",
-				*(float *) (buf + 1), *(float *) (buf + 5), *(float *) (buf + 9));
+			if (buf_size != 13)
+			{
+				fputs("Received a CMT_PLAYER_POS message of invalid length\n",
+					stderr);
+				break;
+			}
+
+			client->player_x = read_f32(&ptr);
+			client->player_y = read_f32(&ptr);
+			client->player_rot = read_f32(&ptr);
+
+			break;
+
+		case CMT_SHOOT_BULLET:
+			if (buf_size != 13)
+			{
+				fputs("Received a CMT_SHOOT_BULLET message of invalid length\n",
+					stderr);
+				break;
+			}
+
+			buf[0] = SMT_SPAWN_BULLET;
 			broadcast_except(clients, client, buf, buf_size);
+
+			break;
+
+		default:
+			printf("Received unknown message of type %hhu\n", msg_type);
 			break;
 	}
-
-	printf("Incoming data from %d:\n%.*s\n\n",
-		client->fd, (int) buf_size, buf);
 }
 
 /**
@@ -397,15 +412,14 @@ serve(int server_fd)
 
 	int new_client_fd;
 	struct sockaddr_in client_address;
-	socklen_t client_address_size;
+	socklen_t client_address_size = sizeof(client_address);
 
 	uint8_t done_anything;
 
-	done_anything = 0;
-	client_address_size = sizeof(client_address);
-
 	while (1)
 	{
+		done_anything = 0;
+
 		// If there is a new connection, accept it
 
 		new_client_fd = accept(server_fd, (struct sockaddr *) &client_address,
