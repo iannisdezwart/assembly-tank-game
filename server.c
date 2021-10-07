@@ -7,6 +7,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include "network_messages.h"
+
 
 #define PORT 4242
 
@@ -177,14 +179,102 @@ del_client(struct Client *clients, struct Client *obsolete_client)
 }
 
 /**
+ * @brief Queues data to be written to a client.
+ * @param client The client to write to.
+ * @param buf A pointer to the data to queue.
+ * @param buf_size The number of bytes on the buffer.
+ */
+void
+queue_write(struct Client *client, char *buf, size_t buf_size)
+{
+	struct WriteQueueNode *last_node;
+
+	if (client->write_queue == NULL)
+	{
+		client->write_queue = new(struct WriteQueueNode);
+		client->write_queue->buf = buf;
+		client->write_queue->buf_size = buf_size;
+		client->write_queue->next = NULL;
+	}
+	else
+	{
+		last_node = client->write_queue;
+
+		while (last_node->next != NULL)
+		{
+			last_node = last_node->next;
+		}
+
+		last_node->next = new(struct WriteQueueNode);
+		last_node->next->buf = buf;
+		last_node->next->buf_size = buf_size;
+		last_node->next->next = NULL;
+	}
+}
+
+/**
+ * @brief Broadcasts a message to every client.
+ * @param clients A pointer to the clients array.
+ * @param buf A pointer to the data to queue.
+ * @param buf_size The number of bytes on the buffer.
+ */
+void
+broadcast(struct Client *clients, char *buf, size_t buf_size)
+{
+	for (size_t i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (clients[i].fd != 0)
+		{
+			queue_write(clients + i, buf, buf_size);
+		}
+	}
+}
+
+/**
+ * @brief Broadcasts a message to every client except one.
+ * @param clients A pointer to the clients array.
+ * @param skip_client A pointer to the client to skip.
+ * @param buf A pointer to the data to queue.
+ * @param buf_size The number of bytes on the buffer.
+ */
+void
+broadcast_except(struct Client *clients, struct Client *skip_client,
+	char *buf, size_t buf_size)
+{
+	for (size_t i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (clients[i].fd != 0 && clients + i != skip_client)
+		{
+			queue_write(clients + i, buf, buf_size);
+		}
+	}
+}
+
+/**
  * @brief Handles incoming messages to the server.
+ * @param clients A pointer to the clients array.
  * @param client A pointer to the client that sent the data.
  * @param buf Contains the read data.
  * @param buf_size Number of bytes on the buffer.
  */
 void
-handle_incoming_data(struct Client *client, char *buf, size_t buf_size)
+handle_incoming_data(struct Client *clients, struct Client *client,
+	char *buf, size_t buf_size)
 {
+	if (buf_size == 0)
+	{
+		return;
+	}
+
+	switch (buf[0])
+	{
+		case CMT_PLAYER_POS:
+			printf("player pos: x = %.1f, y = %.1f, rot = %.1f\n",
+				*(float *) (buf + 1), *(float *) (buf + 5), *(float *) (buf + 9));
+			broadcast_except(clients, client, buf, buf_size);
+			break;
+	}
+
 	printf("Incoming data from %d:\n%.*s\n\n",
 		client->fd, (int) buf_size, buf);
 }
@@ -289,44 +379,10 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 	}
 
 	done_anything = 1;
-	handle_incoming_data(client, read_buf, bytes_rw);
+	handle_incoming_data(clients, client, read_buf, bytes_rw);
 
 	ret:
 	return done_anything;
-}
-
-/**
- * @brief Queues data to be written to a client.
- * @param client The client to write to.
- * @param buf A pointer to the data to queue.
- * @param buf_size The number of bytes on the buffer.
- */
-void
-queue_write(struct Client *client, char *buf, size_t buf_size)
-{
-	struct WriteQueueNode *last_node;
-
-	if (client->write_queue == NULL)
-	{
-		client->write_queue = new(struct WriteQueueNode);
-		client->write_queue->buf = buf;
-		client->write_queue->buf_size = buf_size;
-		client->write_queue->next = NULL;
-	}
-	else
-	{
-		last_node = client->write_queue;
-
-		while (last_node->next != NULL)
-		{
-			last_node = last_node->next;
-		}
-
-		last_node->next = new(struct WriteQueueNode);
-		last_node->next->buf = buf;
-		last_node->next->buf_size = buf_size;
-		last_node->next->next = NULL;
-	}
 }
 
 /**

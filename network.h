@@ -3,15 +3,14 @@
 
 int socket_fd;
 
-struct sockaddr_in server_addr;
-
 /**
  * @brief Initialises the connection to the server.
  */
 void
-connect_socket(void)
+setup_socket(void)
 {
 	char buf[1024];
+	struct sockaddr_in server_addr;
 
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -44,4 +43,13 @@ connect_socket(void)
 	send(socket_fd, buf, strlen(buf), 0);
 	read(socket_fd, buf, 1024);
 	printf("got a message from the server: %s\n", buf);
+}
+
+/**
+ * @brief Closes the client socket.
+ */
+void
+cleanup_socket(void)
+{
+	close(socket_fd);
 }
