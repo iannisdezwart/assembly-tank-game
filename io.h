@@ -43,6 +43,10 @@ handle_events(void)
 	float bullet_x;
 	float bullet_y;
 
+	float temp_x;
+	float temp_y;
+	float temp_rot;
+
 	char read_buf[READ_BUF_SIZE];
 	char *read_ptr;
 	ssize_t read_buf_size;
@@ -186,10 +190,11 @@ handle_events(void)
 
 				for (player_t i = 0; i < num_clients; i++)
 				{
-					add_other_player(
-						/*  x  */ read_f32(&read_ptr),
-						/*  y  */ read_f32(&read_ptr),
-						/* rot */ read_f32(&read_ptr));
+					temp_x = read_f32(&read_ptr);
+					temp_y = read_f32(&read_ptr);
+					temp_rot = read_f32(&read_ptr);
+
+					add_other_player(temp_x, temp_y, temp_rot);
 				}
 
 				read_buf_size -= 1 + sizeof(player_t) + 12 * num_clients;
@@ -203,10 +208,11 @@ handle_events(void)
 					break;
 				}
 
-				add_bullet(
-					/*    x    */ read_f32(&read_ptr),
-					/*    y    */ read_f32(&read_ptr),
-					/* heading */ read_f32(&read_ptr));
+				temp_x = read_f32(&read_ptr);
+				temp_y = read_f32(&read_ptr);
+				temp_rot = read_f32(&read_ptr);
+
+				add_bullet(temp_x, temp_y, temp_rot);
 
 				read_buf_size -= 13;
 				break;
