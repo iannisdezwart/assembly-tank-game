@@ -218,7 +218,7 @@ handle_events(void)
 				break;
 
 			default:
-				fprintf(stderr, "Received unknown message from server of type %hhu\n",
+				fprintf(stderr, "Received unknown message from server of type %u\n",
 					msg_type);
 				break;
 		}

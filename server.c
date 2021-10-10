@@ -314,7 +314,7 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				break;
 
 			default:
-				printf("Received unknown message of type %hhu\n", msg_type);
+				printf("Received unknown message of type %u\n", msg_type);
 				goto skip_all;
 		}
 	}

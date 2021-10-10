@@ -1,4 +1,3 @@
-CC = gcc
 MAIN_CFLAGS = -g -O3 -Wall -lSDL2 -lSDL2_ttf -lm
 SERVER_CFLAGS = -g -O3 -Wall
 TEST_CLIENT_CFLAGS = -g -O3 -Wall
