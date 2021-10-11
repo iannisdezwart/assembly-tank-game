@@ -9,11 +9,6 @@
 #include <string.h>
 #include <errno.h>
 
-#include "timing.h"
-#include "network_messages.h"
-#include "buffer.h"
-#include "socket_tools.h"
-
 
 #define PORT 4242
 
@@ -21,7 +16,6 @@
 #define client_t uint8_t
 #define READ_BUF_SIZE 4096
 #define IDLE_TIMEOUT_USEC 10000
-#define USEC_PER_SERVER_TICK 100000
 
 #define die(msg) do { \
 	fprintf(stderr, msg ": %s\n", \
@@ -30,6 +24,13 @@
 } while (0);
 
 #define new(type) (type *) malloc(sizeof(type))
+
+
+#include "shared_ptr.h"
+#include "timing.h"
+#include "network_messages.h"
+#include "buffer.h"
+#include "socket_tools.h"
 
 
 /**
@@ -81,13 +82,13 @@ create_server(void)
  * @brief Linked list structure containing a batch of data that has to
  * be written to a client socket.
  * @param buf_size The size of the data buffer.
- * @param buf A pointer to the heap allocated data buffer. Must be freed.
+ * @param buf_shr_ptr A shared pointer to the data buffer. Must be disowned.
  * @param next A pointer to the next element on the list. Must be freed.
  */
 struct WriteQueueNode
 {
 	size_t buf_size;
-	char *buf;
+	struct SharedPtr *buf_shr_ptr;
 	struct WriteQueueNode *next;
 };
 
@@ -103,7 +104,7 @@ free_write_queue(struct WriteQueueNode *write_queue)
 		free_write_queue(write_queue->next);
 	}
 
-	free(write_queue->buf);
+	SharedPtr_disown(write_queue->buf_shr_ptr);
 	free(write_queue);
 }
 
@@ -178,18 +179,19 @@ del_client(struct Client *clients, struct Client *obsolete_client)
 /**
  * @brief Queues data to be written to a client.
  * @param client The client to write to.
- * @param buf A pointer to the data to queue.
+ * @param buf_shr_ptr A shared pointer to the buffer to queue.
  * @param buf_size The number of bytes on the buffer.
  */
 void
-queue_write(struct Client *client, char *buf, size_t buf_size)
+queue_write(struct Client *client, struct SharedPtr *buf_shr_ptr,
+	size_t buf_size)
 {
 	struct WriteQueueNode *last_node;
 
 	if (client->write_queue == NULL)
 	{
 		client->write_queue = new(struct WriteQueueNode);
-		client->write_queue->buf = buf;
+		client->write_queue->buf_shr_ptr = buf_shr_ptr;
 		client->write_queue->buf_size = buf_size;
 		client->write_queue->next = NULL;
 	}
@@ -203,7 +205,7 @@ queue_write(struct Client *client, char *buf, size_t buf_size)
 		}
 
 		last_node->next = new(struct WriteQueueNode);
-		last_node->next->buf = buf;
+		last_node->next->buf_shr_ptr = buf_shr_ptr;
 		last_node->next->buf_size = buf_size;
 		last_node->next->next = NULL;
 	}
@@ -218,11 +220,14 @@ queue_write(struct Client *client, char *buf, size_t buf_size)
 void
 broadcast(struct Client *clients, char *buf, size_t buf_size)
 {
+	struct SharedPtr *buf_shr_ptr = SharedPtr_create(buf, 0);
+
 	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (clients[i].fd != 0)
 		{
-			queue_write(clients + i, buf, buf_size);
+			queue_write(clients + i, buf_shr_ptr, buf_size);
+			buf_shr_ptr->handles++;
 		}
 	}
 }
@@ -238,11 +243,14 @@ void
 broadcast_except(struct Client *clients, struct Client *skip_client,
 	char *buf, size_t buf_size)
 {
+	struct SharedPtr *buf_shr_ptr = SharedPtr_create(buf, 0);
+
 	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (clients[i].fd != 0 && clients + i != skip_client)
 		{
-			queue_write(clients + i, buf, buf_size);
+			queue_write(clients + i, buf_shr_ptr, buf_size);
+			buf_shr_ptr->handles++;
 		}
 	}
 }
@@ -369,7 +377,7 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 	{
 		// Write the buffer
 
-		bytes_rw = write(client->fd, client->write_queue->buf,
+		bytes_rw = write(client->fd, client->write_queue->buf_shr_ptr->ptr,
 			client->write_queue->buf_size);
 
 		flush_socket(client->fd);
@@ -388,7 +396,7 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 
 		done_anything = 1;
 		next_wq_node = client->write_queue->next;
-		free(client->write_queue->buf);
+		SharedPtr_disown(client->write_queue->buf_shr_ptr);
 		free(client->write_queue);
 
 		// Shift the write queue
@@ -440,6 +448,7 @@ send_player_positions(struct Client *clients, struct Client *client)
 {
 	char *buf = malloc(1 + sizeof(client_t) + 12 * MAX_CLIENTS);
 	char *ptr = buf;
+	struct SharedPtr *buf_shr_ptr;
 	size_t buf_size = 1;
 
 	#if MAX_CLIENTS > 255
@@ -481,7 +490,11 @@ send_player_positions(struct Client *clients, struct Client *client)
 	*(client_t *) (buf + 1) = num_clients;
 	buf_size++;
 
-	queue_write(client, buf, buf_size);
+	// Wrap the buffer around a shared pointer so it is only freed after
+	// we have written the buffer to all selected clients
+
+	buf_shr_ptr = SharedPtr_create(buf, num_clients);
+	queue_write(client, buf_shr_ptr, buf_size);
 }
 
 /**

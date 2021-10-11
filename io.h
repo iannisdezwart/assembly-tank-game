@@ -1,4 +1,5 @@
 #define READ_BUF_SIZE 4096
+#define CAP_FPS_TO_REFRESH_RATE
 
 int raw_mouse_x;
 int raw_mouse_y;
@@ -29,8 +30,13 @@ handle_events(void)
 
 	uint64_t start_time;
 	uint64_t finish_time;
+
+	#ifdef CAP_FPS_TO_REFRESH_RATE
+
 	uint64_t duration;
 	int64_t delay;
+
+	#endif
 
 	struct Point pointer;
 
@@ -227,15 +233,19 @@ handle_events(void)
 	// Schedule next frame
 
 	finish_time = now();
+	add_frame_time(finish_time);
+
+	#ifdef CAP_FPS_TO_REFRESH_RATE
+
 	duration = finish_time - start_time;
 	delay = frame_time_usec - duration;
-
-	add_frame_time(finish_time);
 
 	if (delay > 0)
 	{
 		usleep(delay);
 	}
+
+	#endif
 
 	goto next_event;
 

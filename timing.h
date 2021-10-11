@@ -9,4 +9,4 @@ now(void)
 	return tv.tv_sec * (uint64_t) 1000000 + tv.tv_usec;
 }
 
-#define USEC_PER_SERVER_TICK 100000
+#define USEC_PER_SERVER_TICK 10000
