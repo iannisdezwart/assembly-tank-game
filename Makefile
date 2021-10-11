@@ -1,5 +1,5 @@
 MAIN_CFLAGS = -g -O3 -Wall -lSDL2 -lSDL2_ttf -lm
-SERVER_CFLAGS = -g -O3 -Wall
+SERVER_CFLAGS = -g -O3 -Wall -lm
 TEST_CLIENT_CFLAGS = -g -O3 -Wall
 
 all: main server

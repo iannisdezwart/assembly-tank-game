@@ -1,7 +1,3 @@
-#define MAP_WIDTH 1000
-#define MAP_HEIGHT MAP_WIDTH
-#define MAP_BORDER_THICKNESS 10
-
 void
 render_border(void)
 {

@@ -6,6 +6,7 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <math.h>
 #include <string.h>
 #include <errno.h>
 
@@ -27,8 +28,10 @@
 
 
 #include "shared_ptr.h"
-#include "tank_struct.h"
-#include "timing.h"
+#include "timing_shared.h"
+#include "map_shared.h"
+#include "bullet_shared.h"
+#include "tank_shared.h"
 #include "network_messages.h"
 #include "buffer.h"
 #include "socket_tools.h"
@@ -266,9 +269,14 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 	char *read_buf, size_t read_buf_size)
 {
 	enum ClientMessageType msg_type;
+
 	char *read_ptr = read_buf;
 	char *write_buf;
 	char *write_ptr;
+
+	float bullet_x;
+	float bullet_y;
+	float bullet_heading;
 
 	while (read_buf_size > 0)
 	{
@@ -307,13 +315,29 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 					break;
 				}
 
+				// Create buffer for message
+
 				write_buf = malloc(13);
 				write_ptr = write_buf;
 
+				// Get bullet data
+
 				write_u8(&write_ptr, SMT_SPAWN_BULLET);
-				write_f32(&write_ptr, read_f32(&read_ptr));
-				write_f32(&write_ptr, read_f32(&read_ptr));
-				write_f32(&write_ptr, read_f32(&read_ptr));
+
+				bullet_x = read_f32(&read_ptr);
+				bullet_y = read_f32(&read_ptr);
+				bullet_heading = read_f32(&read_ptr);
+
+				// Add a bullet to the bullets array
+
+				add_bullet(bullet_x, bullet_y, bullet_heading);
+
+				// Broadcast message to other clients that a new bullet has spawned
+
+				write_u8(&write_ptr, SMT_SPAWN_BULLET);
+				write_u8(&write_ptr, bullet_x);
+				write_u8(&write_ptr, bullet_y);
+				write_u8(&write_ptr, bullet_heading);
 
 				broadcast_except(clients, client, write_buf, 13);
 
@@ -343,13 +367,13 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 	ssize_t bytes_rw;
 	struct WriteQueueNode *next_wq_node;
 	char read_buf[READ_BUF_SIZE];
-	uint8_t done_anything;
+	uint8_t done_io;
 
 	int socket_state;
 	int socket_err;
 	socklen_t socket_error_size = sizeof(socket_err);
 
-	done_anything = 0;
+	done_io = 0;
 
 	// Check if the socket is still up
 
@@ -393,7 +417,7 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 
 		// Free the write queue node we just processed
 
-		done_anything = 1;
+		done_io = 1;
 		next_wq_node = client->write_queue->next;
 		SharedPtr_disown(client->write_queue->buf_shr_ptr);
 		free(client->write_queue);
@@ -430,11 +454,11 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 		goto ret;
 	}
 
-	done_anything = 1;
+	done_io = 1;
 	handle_incoming_data(clients, client, read_buf, bytes_rw);
 
 	ret:
-	return done_anything;
+	return done_io;
 }
 
 /**
@@ -497,6 +521,75 @@ send_player_positions(struct Client *clients, struct Client *client)
 }
 
 /**
+ * @brief Subtracts health points from a client.
+ * @param client The client to subtract health points from.
+ */
+void
+hit_client(struct Client *client)
+{
+	if (BULLET_DAMAGE > client->player.health)
+	{
+		client->player.health = 0;
+
+		printf("client %d died\n",
+			client->fd);
+	}
+	else
+	{
+		client->player.health -= BULLET_DAMAGE;
+	}
+}
+
+/**
+ * @brief Checks if a bullet hits a client.
+ * @param bullet The bullet to check.
+ * @param client The client to check.
+ * @returns 1 if the bullet is in hitting range of the client, 0 if not.
+ */
+uint8_t
+bullet_in_range(struct Bullet *bullet, struct Client *client)
+{
+	float dx = client->player.x - bullet->x;
+	float dy = client->player.y - bullet->y;
+
+	return hypot(dx, dy) < (TANK_BODY_RADIUS - BULLET_RADIUS);
+}
+
+/**
+ * @brief Handles bullet collisions for a given client.
+ * @param client The client to check bullet collisions for.
+ */
+void
+handle_bullet_hits_for_client(struct Client *client)
+{
+	for (size_t j = 0; j < n_bullets; j++)
+	{
+		if (bullet_in_range(bullets + j, client))
+		{
+			hit_client(client);
+			printf("client %d got hit and now has %hhu HP\n",
+				client->fd, client->player.health);
+		}
+	}
+}
+
+/**
+ * @brief Handles bullet collisions.
+ * @param clients A pointer to the start of the clients array.
+ */
+void
+handle_bullet_hits(struct Client *clients)
+{
+	for (size_t i = 0; i < MAX_CLIENTS; i++)
+	{
+		if (clients->fd != 0)
+		{
+			handle_bullet_hits_for_client(clients + i);
+		}
+	}
+}
+
+/**
  * @brief Accepts any new connections and handles IO.
  * @param server_fd The server's file descriptor.
  */
@@ -504,6 +597,7 @@ void
 serve(int server_fd)
 {
 	uint64_t latest_server_tick_time;
+	uint64_t latest_dt_update_time;
 
 	struct Client clients[MAX_CLIENTS] = { 0 };
 	size_t client_index = 0;
@@ -512,13 +606,13 @@ serve(int server_fd)
 	struct sockaddr_in client_address;
 	socklen_t client_address_size = sizeof(client_address);
 
-	uint8_t done_anything;
+	uint8_t done_io;
 
-	latest_server_tick_time = now();
+	latest_dt_update_time = latest_server_tick_time = now();
 
 	while (1)
 	{
-		done_anything = 0;
+		done_io = 0;
 
 		// If there is a new connection, accept it
 
@@ -538,7 +632,7 @@ serve(int server_fd)
 			goto io;
 		}
 
-		done_anything = 1;
+		done_io = 1;
 		set_nonblocking(new_client_fd);
 
 		client_index = add_client(clients, client_index,
@@ -562,7 +656,7 @@ serve(int server_fd)
 			{
 				if (handle_io(clients, clients + i, &client_index))
 				{
-					done_anything = 1;
+					done_io = 1;
 				}
 			}
 		}
@@ -577,14 +671,26 @@ serve(int server_fd)
 				{
 					send_player_positions(clients, clients + i);
 					latest_server_tick_time = now();
-					done_anything = 1;
+					done_io = 1;
 				}
 			}
 		}
 
+		// Update bullets and check if players are hit
+
+		update_bullets();
+		handle_bullet_hits(clients);
+
+		// Update dt
+
+		dt = now() - latest_dt_update_time;
+		latest_dt_update_time = now();
+		dt /= USEC_PER_DT;
+
+
 		// If we're idle, we can give other processes some CPU time
 
-		if (!done_anything)
+		if (!done_io)
 		{
 			usleep(IDLE_TIMEOUT_USEC);
 		}

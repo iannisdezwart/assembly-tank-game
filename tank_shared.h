@@ -5,9 +5,13 @@
 #define TANK_GUN_WIDTH 20
 #define TANK_GUN_HEIGHT 16
 
+typedef uint8_t health_t;
+#define MAX_HEALTH 255
+
 struct Tank
 {
 	float x;
 	float y;
 	float rot;
+	health_t health;
 };

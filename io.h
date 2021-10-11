@@ -148,6 +148,8 @@ handle_events(void)
 
 	update_other_players();
 	update_bullets();
+
+	render_bullets();
 	render_fps_counter();
 	render_frame();
 

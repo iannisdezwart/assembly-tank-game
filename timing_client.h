@@ -1,10 +1,8 @@
 #define FPS_CALC_FRAMES 5
-#define USEC_PER_DT 100
 
 uint64_t frame_times[FPS_CALC_FRAMES];
 size_t frame_times_index;
 float fps;
-float dt;
 uint64_t last_server_tick_time;
 
 /**
@@ -35,8 +33,6 @@ init_timings(void)
 
 	frame_times[0] = cur_time;
 	frame_times_index = 1;
-	fps = 0;
-	dt = 0;
 	last_server_tick_time = cur_time;
 }
 
