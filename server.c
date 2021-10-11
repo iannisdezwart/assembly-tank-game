@@ -27,6 +27,7 @@
 
 
 #include "shared_ptr.h"
+#include "tank_struct.h"
 #include "timing.h"
 #include "network_messages.h"
 #include "buffer.h"
@@ -120,9 +121,7 @@ struct Client
 {
 	int fd;
 	struct WriteQueueNode *write_queue;
-	float player_x;
-	float player_y;
-	float player_rot;
+	struct Tank player;
 };
 
 /**
@@ -289,9 +288,9 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 					break;
 				}
 
-				client->player_x = read_f32(&read_ptr);
-				client->player_y = read_f32(&read_ptr);
-				client->player_rot = read_f32(&read_ptr);
+				client->player.x = read_f32(&read_ptr);
+				client->player.y = read_f32(&read_ptr);
+				client->player.rot = read_f32(&read_ptr);
 
 				read_buf_size -= 13;
 				break;
@@ -468,9 +467,9 @@ send_player_positions(struct Client *clients, struct Client *client)
 	{
 		if (clients[i].fd != 0 && clients + i != client)
 		{
-			write_f32(&ptr, clients[i].player_x);
-			write_f32(&ptr, clients[i].player_y);
-			write_f32(&ptr, clients[i].player_rot);
+			write_f32(&ptr, clients[i].player.x);
+			write_f32(&ptr, clients[i].player.y);
+			write_f32(&ptr, clients[i].player.rot);
 
 			buf_size += 12;
 			num_clients++;

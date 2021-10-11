@@ -22,6 +22,7 @@
 #include "frame_timing.h"
 #include "assets.h"
 #include "graphics.h"
+#include "tank_struct.h"
 #include "tank.h"
 #include "map.h"
 #include "bullet.h"
