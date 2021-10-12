@@ -103,6 +103,7 @@ send_position_tick(void)
 	write_f32(&ptr, player.x);
 	write_f32(&ptr, player.y);
 	write_f32(&ptr, player.rot);
+	write_u8(&ptr, player.health);
 
 	write_to_socket(socket_fd, buf, sizeof(buf));
 }
@@ -120,11 +121,12 @@ delete_other_players(void)
  * @brief Adds a player to the `other_players` array.
  */
 void
-add_other_player(float x, float y, float rot)
+add_other_player(float x, float y, float rot, health_t health)
 {
 	other_players[num_other_players].x = x;
 	other_players[num_other_players].y = y;
 	other_players[num_other_players].rot = rot;
+	other_players[num_other_players].health = health;
 
 	num_other_players++;
 }
@@ -138,5 +140,6 @@ update_other_players(void)
 	for (player_t i = 0; i < num_other_players; i++)
 	{
 		render_tank(other_players + i);
+		render_health_bar(other_players + i);
 	}
 }

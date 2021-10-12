@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -31,6 +33,7 @@
 #include "timing_shared.h"
 #include "map_shared.h"
 #include "bullet_shared.h"
+#include "bullet_server.h"
 #include "tank_shared.h"
 #include "network_messages.h"
 #include "buffer.h"
@@ -116,16 +119,26 @@ free_write_queue(struct WriteQueueNode *write_queue)
  * @brief Structure for a client connection.
  * @param fd The client's socket file descriptor.
  * @param write_queue A pointer to the head of the write queue.
- * @param player_x The player's last known x location.
- * @param player_y The player's last known y location.
- * @param player_rot The player's last known rotation.
+ * @param player Details about the client's tank.
  */
 struct Client
 {
 	int fd;
 	struct WriteQueueNode *write_queue;
 	struct Tank player;
+	bool active;
 };
+
+/**
+ * @brief Checks if a given client is currently in-game.
+ * @param client The client to check.
+ * @returns True if the client is active, false if not.
+ */
+bool
+Client_is_active(struct Client *client)
+{
+	return client->fd != 0 && client->active;
+}
 
 /**
  * @brief Stores `new_client_fd` onto the `clients` array.
@@ -145,10 +158,13 @@ add_client(struct Client *clients, size_t client_index, int new_client_fd)
 
 	clients[client_index].fd = new_client_fd;
 	clients[client_index].write_queue = NULL;
+	clients[client_index].player.health = MAX_HEALTH;
+	clients[client_index].active = false;
 
 	client_index++;
 
-	while (client_index < MAX_CLIENTS && clients[client_index].fd != 0)
+	while (client_index < MAX_CLIENTS
+		&& Client_is_active(clients + client_index))
 	{
 		client_index++;
 	}
@@ -226,12 +242,25 @@ broadcast(struct Client *clients, char *buf, size_t buf_size)
 
 	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (clients[i].fd != 0)
+		if (Client_is_active(clients + i))
 		{
 			queue_write(clients + i, buf_shr_ptr, buf_size);
 			buf_shr_ptr->handles++;
 		}
 	}
+}
+
+/**
+ * @brief Sends a message to a single client.
+ * @param client A pointer to the client to send the message to.
+ * @param buf A pointer to the data to send.
+ * @param buf_size The number of bytes on the buffer.
+ */
+void
+message_client(struct Client *client, char *buf, size_t buf_size)
+{
+	struct SharedPtr *buf_shr_ptr = SharedPtr_create(buf, 1);
+	queue_write(client, buf_shr_ptr, buf_size);
 }
 
 /**
@@ -249,7 +278,7 @@ broadcast_except(struct Client *clients, struct Client *skip_client,
 
 	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (clients[i].fd != 0 && clients + i != skip_client)
+		if (Client_is_active(clients + i) && clients + i != skip_client)
 		{
 			queue_write(clients + i, buf_shr_ptr, buf_size);
 			buf_shr_ptr->handles++;
@@ -274,6 +303,7 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 	char *write_buf;
 	char *write_ptr;
 
+	bullet_id_t bullet_id;
 	float bullet_x;
 	float bullet_y;
 	float bullet_heading;
@@ -284,6 +314,27 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 
 		switch (msg_type)
 		{
+			case CMT_HANDSHAKE:
+				if (read_buf_size < 1)
+				{
+					fprintf(stderr,
+						"Received a CMT_HANDSHAKE message of invalid length %lu\n",
+						read_buf_size);
+
+					break;
+				}
+
+				write_buf = malloc(5);
+				write_ptr = write_buf;
+
+				write_u8(&write_ptr, SMT_HANDSHAKE);
+				write_u32(&write_ptr, client->fd);
+				client->active = true;
+				message_client(client, write_buf, 5);
+
+				read_buf_size -= 1;
+				break;
+
 			case CMT_PLAYER_POSITION:
 				if (read_buf_size < 13)
 				{
@@ -291,8 +342,11 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 						"Received a CMT_PLAYER_POSITION message of invalid length %lu\n",
 						read_buf_size);
 
-					fprintf(stderr, "Message: %.*s\n", (int) read_buf_size, read_buf);
+					break;
+				}
 
+				if (!client->active)
+				{
 					break;
 				}
 
@@ -310,47 +364,52 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 						"Received a CMT_SHOOT_BULLET message of invalid length %lu\n",
 						read_buf_size);
 
-					fprintf(stderr, "Message: %.*s\n", (int) read_buf_size, read_buf);
+					break;
+				}
 
+				if (!client->active)
+				{
 					break;
 				}
 
 				// Create buffer for message
 
-				write_buf = malloc(13);
+				write_buf = malloc(25);
 				write_ptr = write_buf;
 
 				// Get bullet data
 
-				write_u8(&write_ptr, SMT_SPAWN_BULLET);
-
+				bullet_id = bullet_id_gen++;
 				bullet_x = read_f32(&read_ptr);
 				bullet_y = read_f32(&read_ptr);
 				bullet_heading = read_f32(&read_ptr);
 
+				read_buf_size -= 13;
+
 				// Add a bullet to the bullets array
 
-				add_bullet(bullet_x, bullet_y, bullet_heading);
+				add_bullet(bullet_id, bullet_x, bullet_y, bullet_heading, client->fd);
 
 				// Broadcast message to other clients that a new bullet has spawned
 
 				write_u8(&write_ptr, SMT_SPAWN_BULLET);
-				write_u8(&write_ptr, bullet_x);
-				write_u8(&write_ptr, bullet_y);
-				write_u8(&write_ptr, bullet_heading);
+				write_u64(&write_ptr, bullet_id);
+				write_f32(&write_ptr, bullet_x);
+				write_f32(&write_ptr, bullet_y);
+				write_f32(&write_ptr, bullet_heading);
+				write_u32(&write_ptr, client->fd); // Owner
 
-				broadcast_except(clients, client, write_buf, 13);
+				broadcast(clients, write_buf, 25);
 
-				read_buf_size -= 13;
 				break;
 
 			default:
-				printf("Received unknown message of type %u\n", msg_type);
-				goto skip_all;
+				fprintf(stderr,
+					"Received unknown message of type %u\n",
+					msg_type);
+				break;
 		}
 	}
-
-	skip_all:;
 }
 
 /**
@@ -469,9 +528,8 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 void
 send_player_positions(struct Client *clients, struct Client *client)
 {
-	char *buf = malloc(1 + sizeof(client_t) + 12 * MAX_CLIENTS);
+	char *buf = malloc(1 + sizeof(client_t) + 13 * MAX_CLIENTS);
 	char *ptr = buf;
-	struct SharedPtr *buf_shr_ptr;
 	size_t buf_size = 1;
 
 	#if MAX_CLIENTS > 255
@@ -489,13 +547,14 @@ send_player_positions(struct Client *clients, struct Client *client)
 
 	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (clients[i].fd != 0 && clients + i != client)
+		if (Client_is_active(clients + i) && clients + i != client)
 		{
 			write_f32(&ptr, clients[i].player.x);
 			write_f32(&ptr, clients[i].player.y);
 			write_f32(&ptr, clients[i].player.rot);
+			write_u8(&ptr, clients[i].player.health);
 
-			buf_size += 12;
+			buf_size += 13;
 			num_clients++;
 		}
 	}
@@ -513,11 +572,9 @@ send_player_positions(struct Client *clients, struct Client *client)
 	*(client_t *) (buf + 1) = num_clients;
 	buf_size++;
 
-	// Wrap the buffer around a shared pointer so it is only freed after
-	// we have written the buffer to all selected clients
+	// Send the message
 
-	buf_shr_ptr = SharedPtr_create(buf, num_clients);
-	queue_write(client, buf_shr_ptr, buf_size);
+	message_client(client, buf, buf_size);
 }
 
 /**
@@ -552,11 +609,12 @@ bullet_in_range(struct Bullet *bullet, struct Client *client)
 	float dx = client->player.x - bullet->x;
 	float dy = client->player.y - bullet->y;
 
-	return hypot(dx, dy) < (TANK_BODY_RADIUS - BULLET_RADIUS);
+	return hypot(dx, dy) < (TANK_BODY_RADIUS + BULLET_RADIUS);
 }
 
 /**
  * @brief Handles bullet collisions for a given client.
+ * The client will receive damage and the bullet will be removed.
  * @param client The client to check bullet collisions for.
  */
 void
@@ -564,11 +622,11 @@ handle_bullet_hits_for_client(struct Client *client)
 {
 	for (size_t j = 0; j < n_bullets; j++)
 	{
-		if (bullet_in_range(bullets + j, client))
+		if (Bullet_is_active(bullets + j)
+			&& bullet_in_range(bullets + j, client))
 		{
 			hit_client(client);
-			printf("client %d got hit and now has %hhu HP\n",
-				client->fd, client->player.health);
+			add_to_deleted_bullets(bullets + j);
 		}
 	}
 }
@@ -582,11 +640,35 @@ handle_bullet_hits(struct Client *clients)
 {
 	for (size_t i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (clients->fd != 0)
+		if (Client_is_active(clients + i))
 		{
 			handle_bullet_hits_for_client(clients + i);
 		}
 	}
+}
+
+/**
+ * @brief Sends all clients an array of deleted bullets.
+ * @param clients A pointer to the start of the clients array.
+ */
+void
+send_deleted_bullets(struct Client *clients)
+{
+	size_t size = deleted_bullets_ptr - deleted_bullets;
+	size_t buf_size = 9 + size * sizeof(bullet_id_t);
+	char *buf = malloc(buf_size);
+	char *ptr = buf;
+
+	write_u8(&ptr, SMT_DELETED_BULLETS);
+	write_u64(&ptr, size);
+
+	for (bullet_id_t *it = deleted_bullets; it < deleted_bullets_ptr; it++)
+	{
+		write_u64(&ptr, *it);
+	}
+
+	broadcast(clients, buf, buf_size);
+	reset_deleted_bullets();
 }
 
 /**
@@ -635,8 +717,7 @@ serve(int server_fd)
 		done_io = 1;
 		set_nonblocking(new_client_fd);
 
-		client_index = add_client(clients, client_index,
-			new_client_fd);
+		client_index = add_client(clients, client_index, new_client_fd);
 
 		printf("new client %d\n", new_client_fd);
 
@@ -661,19 +742,25 @@ serve(int server_fd)
 			}
 		}
 
-		// Broadcast player positions to clients
+		// Broadcast player positions and removed bullets to clients
 
 		if (now() - latest_server_tick_time >= USEC_PER_SERVER_TICK)
 		{
 			for (client_t i = 0; i < MAX_CLIENTS; i++)
 			{
-				if (clients[i].fd != 0)
+				if (Client_is_active(clients + i))
 				{
+					// Player positions
+
 					send_player_positions(clients, clients + i);
 					latest_server_tick_time = now();
 					done_io = 1;
 				}
 			}
+
+			// Removed bullets
+
+			send_deleted_bullets(clients);
 		}
 
 		// Update bullets and check if players are hit

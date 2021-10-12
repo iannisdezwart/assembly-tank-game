@@ -31,15 +31,17 @@ setup_fullscreen_window(void)
 
 	SDL_GetCurrentDisplayMode(0, &display_mode);
 
-	width = display_mode.w;
-	height = display_mode.h;
+	width = display_mode.w / 2;
+	height = display_mode.h / 2;
 	refresh_rate = display_mode.refresh_rate;
 	frame_time_usec = (uint64_t) 1E6 / refresh_rate;
 
 	// Create window
 
+	// window = SDL_CreateWindow("TankGame", SDL_WINDOWPOS_CENTERED,
+	// 	SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_FULLSCREEN);
 	window = SDL_CreateWindow("TankGame", SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_FULLSCREEN);
+		SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
 
 	if (window == NULL)
 	{

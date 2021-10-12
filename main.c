@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -15,8 +16,8 @@
 
 #include "buffer.h"
 #include "socket_tools.h"
-#include "network.h"
 #include "network_messages.h"
+#include "network.h"
 #include "window.h"
 #include "timing_shared.h"
 #include "timing_client.h"
@@ -24,6 +25,7 @@
 #include "graphics.h"
 #include "tank_shared.h"
 #include "tank_client.h"
+#include "health_bar.h"
 #include "map_shared.h"
 #include "map_client.h"
 #include "bullet_shared.h"
@@ -41,6 +43,7 @@ main(int argc, char **argv)
 	setup_assets();
 	setup_io();
 	setup_socket();
+	send_handshake();
 
 	// Main loop
 
@@ -48,8 +51,8 @@ main(int argc, char **argv)
 
 	// Cleanup
 
-	cleanup_window();
 	cleanup_assets();
+	cleanup_window();
 	cleanup_socket();
 
 	return 0;

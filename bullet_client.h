@@ -12,7 +12,15 @@ render_bullets(void)
 		bullet = bullets + i;
 		pos_tr = translate(bullet->x, bullet->y);
 
-		set_colour_rgb(BULLET_COLOUR);
+		if (bullet->owner == client_id)
+		{
+			set_colour_rgb(BULLET_COLOUR);
+		}
+		else
+		{
+			set_colour_rgb(BULLET_COLOUR_OPPONENT);
+		}
+
 		fill_circle(pos_tr.x, pos_tr.y, BULLET_RADIUS);
 	}
 }

@@ -2,6 +2,7 @@
 #define SERVER_PORT 4242
 
 int socket_fd;
+int client_id;
 
 /**
  * @brief Initialises the connection to the server.
@@ -93,4 +94,18 @@ void
 cleanup_socket(void)
 {
 	close(socket_fd);
+}
+
+/**
+ * @brief Sends a handshake to the server.
+ */
+void
+send_handshake(void)
+{
+	char buf[1];
+	char *ptr = buf;
+
+	write_u8(&ptr, CMT_HANDSHAKE);
+
+	write_to_socket(socket_fd, buf, sizeof(buf));
 }

@@ -8,6 +8,13 @@
 typedef uint8_t health_t;
 #define MAX_HEALTH 255
 
+/**
+ * @brief A structure containing the position and health of a tank.
+ * @param x The x coordinate of the tank.
+ * @param y The y coordinate of the tank.
+ * @param rot The rotation of the tank.
+ * @param health The health of the tank.
+ */
 struct Tank
 {
 	float x;

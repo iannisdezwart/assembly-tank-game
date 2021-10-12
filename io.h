@@ -31,6 +31,8 @@ handle_events(void)
 	uint64_t start_time;
 	uint64_t finish_time;
 
+	uint64_t latest_shoot_time = 0;
+
 	#ifdef CAP_FPS_TO_REFRESH_RATE
 
 	uint64_t duration;
@@ -52,6 +54,10 @@ handle_events(void)
 	float temp_x;
 	float temp_y;
 	float temp_rot;
+	health_t temp_health;
+	int temp_owner;
+	bullet_id_t temp_bullet_id;
+	uint64_t size;
 
 	char read_buf[READ_BUF_SIZE];
 	char *read_ptr;
@@ -163,13 +169,13 @@ handle_events(void)
 
 	// Shoot
 
-	if (shooting)
+	if (shooting && now() - latest_shoot_time >= BULLET_RELOAD_SPEED)
 	{
 		bullet_x = player.x + (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * cos(player.rot);
 		bullet_y = player.y + (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * sin(player.rot);
 
 		send_bullet(bullet_x, bullet_y, player.rot);
-		add_bullet(bullet_x, bullet_y, player.rot);
+		latest_shoot_time = now();
 	}
 
 	// Read socket
@@ -183,11 +189,26 @@ handle_events(void)
 
 		switch (msg_type)
 		{
+			case SMT_HANDSHAKE:
+				if (read_buf_size < 5)
+				{
+					fprintf(stderr,
+						"Received a SMT_HANDSHAKE message of invalid length %lu\n",
+						read_buf_size);
+					break;
+				}
+
+				client_id = read_u32(&read_ptr);
+
+				read_buf_size -= 5;
+				break;
+
 			case SMT_PLAYER_POSITIONS:
 				if (read_buf_size < (sizeof(player_t) + 1))
 				{
-					fputs("Received a SMT_PLAYER_POSITIONS message of invalid length\n",
-						stderr);
+					fprintf(stderr,
+						"Received a SMT_PLAYER_POSITIONS message of invalid length %lu\n",
+						read_buf_size);
 					break;
 				}
 
@@ -201,33 +222,58 @@ handle_events(void)
 					temp_x = read_f32(&read_ptr);
 					temp_y = read_f32(&read_ptr);
 					temp_rot = read_f32(&read_ptr);
+					temp_health = read_u8(&read_ptr);
 
-					add_other_player(temp_x, temp_y, temp_rot);
+					add_other_player(temp_x, temp_y, temp_rot, temp_health);
 				}
 
-				read_buf_size -= 1 + sizeof(player_t) + 12 * num_clients;
+				read_buf_size -= 1 + sizeof(player_t) + 13 * num_clients;
 				break;
 
 			case SMT_SPAWN_BULLET:
-				if (read_buf_size < 13)
+				if (read_buf_size < 25)
 				{
-					fputs("Received a SMT_SPAWN_BULLET message of invalid length\n",
-						stderr);
+					fprintf(stderr,
+						"Received a SMT_SPAWN_BULLET message of invalid length %lu\n",
+						read_buf_size);
 					break;
 				}
 
+				temp_bullet_id = read_u64(&read_ptr);
 				temp_x = read_f32(&read_ptr);
 				temp_y = read_f32(&read_ptr);
 				temp_rot = read_f32(&read_ptr);
+				temp_owner = read_u32(&read_ptr);
+ 
+				add_bullet(temp_bullet_id, temp_x, temp_y, temp_rot, temp_owner);
 
-				add_bullet(temp_x, temp_y, temp_rot);
+				read_buf_size -= 25;
+				break;
 
-				read_buf_size -= 13;
+			case SMT_DELETED_BULLETS:
+				if (read_buf_size < 9)
+				{
+					fprintf(stderr,
+						"Received a SMT_DELETED_BULLETS message of invalid length %lu\n",
+						read_buf_size);
+					break;
+				}
+
+				size = read_u64(&read_ptr);
+
+				for (size_t i = 0; i < size; i++)
+				{
+					temp_bullet_id = read_u64(&read_ptr);
+					del_bullet_by_id(temp_bullet_id);
+				}
+
+				read_buf_size -= 9 + size * sizeof(bullet_id_t);
 				break;
 
 			default:
-				fprintf(stderr, "Received unknown message from server of type %u\n",
-					msg_type);
+				fprintf(stderr,
+					"Received unknown message from server of type %u of length %lu\n",
+					msg_type, read_buf_size);
 				break;
 		}
 	}
