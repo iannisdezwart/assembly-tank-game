@@ -301,6 +301,42 @@ broadcast_except(struct Client *clients, struct Client *skip_client,
 }
 
 /**
+ * @brief Returns a random integer between min and max.
+ * @param min The lower bound, inclusive.
+ * @param max The upper bound, inclusive.
+ */
+uint32_t
+random_int(uint32_t min, uint32_t max)
+{
+	uint32_t range = max - min + 1;
+	uint32_t random = rand() % range;
+	return random + min;
+}
+
+/**
+ * @brief Messages a client that it may respawn and resets its health.
+ * @param client The client to respawn.
+ */
+void
+respawn_client(struct Client *client)
+{
+	size_t buf_size = 9;
+	char *buf = malloc(buf_size);
+	char *ptr = buf;
+
+	float respawn_x = random_int(0, MAP_WIDTH);
+	float respawn_y = random_int(0, MAP_HEIGHT);
+
+	write_u8(&ptr, SMT_RESPAWN);
+	write_f32(&ptr, respawn_x);
+	write_f32(&ptr, respawn_y);
+
+	client->player.health = MAX_HEALTH;
+
+	message_client(client, buf, buf_size);
+}
+
+/**
  * @brief Handles incoming messages to the server.
  * @param clients A pointer to the clients array.
  * @param client A pointer to the client that sent the data.
@@ -345,6 +381,8 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				write_u32(&write_ptr, client->fd);
 				client->active = true;
 				message_client(client, write_buf, 5);
+
+				respawn_client(client);
 
 				read_buf_size -= 1;
 				break;
@@ -575,14 +613,6 @@ send_player_positions(struct Client *clients, struct Client *client)
 		}
 	}
 
-	if (num_clients == 0)
-	{
-		// There is only one player, so we won't send it an empty array
-
-		free(buf);
-		return;
-	}
-
 	// Write the number of clients
 
 	*(client_t *) (buf + 2) = num_clients;
@@ -593,42 +623,16 @@ send_player_positions(struct Client *clients, struct Client *client)
 }
 
 /**
- * @brief Returns a random integer between min and max.
- * @param min The lower bound, inclusive.
- * @param max The upper bound, inclusive.
- */
-uint32_t
-random_int(uint32_t min, uint32_t max)
-{
-	uint32_t range = max - min + 1;
-	uint32_t random = rand() % range;
-	return random + min;
-}
-
-/**
  * @brief Respawns a client if it is dead and it has been waiting long enough.
  * @param clients A pointer to the clients array.
  */
 void
 respawn_dead_client(struct Client *client)
 {
-	size_t buf_size = 9;
-	char *buf = malloc(buf_size);
-	char *ptr = buf;
-
-	float respawn_x = random_int(0, MAP_WIDTH);
-	float respawn_y = random_int(0, MAP_HEIGHT);
-
 	if (!Client_is_alive(client) && now() - client->kill_time
 		>= RESPAWN_WAITING_TIME_USEC)
 	{
-		write_u8(&ptr, SMT_RESPAWN);
-		write_f32(&ptr, respawn_x);
-		write_f32(&ptr, respawn_y);
-
-		client->player.health = MAX_HEALTH;
-
-		message_client(client, buf, buf_size);
+		respawn_client(client);
 	}
 }
 
