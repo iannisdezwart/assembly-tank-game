@@ -17,6 +17,8 @@
 
 #define MAX_CLIENTS 255 // Also change `MAX_PLAYERS` in `player.h`
 #define client_t uint8_t
+#define RESPAWN_WAITING_TIME_USEC (uint64_t) 5E6
+
 #define READ_BUF_SIZE 4096
 #define IDLE_TIMEOUT_USEC 10000
 
@@ -127,6 +129,7 @@ struct Client
 	struct WriteQueueNode *write_queue;
 	struct Tank player;
 	bool active;
+	uint64_t kill_time;
 };
 
 /**
@@ -138,6 +141,17 @@ bool
 Client_is_active(struct Client *client)
 {
 	return client->fd != 0 && client->active;
+}
+
+/**
+ * @brief Checks if a given client is alive.
+ * @param client The client to check.
+ * @returns True if the client is alive, false, if not.
+ */
+bool
+Client_is_alive(struct Client *client)
+{
+	return client->player.health > 0;
 }
 
 /**
@@ -345,7 +359,9 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 					break;
 				}
 
-				if (!client->active)
+				read_buf_size -= 13;
+
+				if (!client->active || !Client_is_alive(client))
 				{
 					break;
 				}
@@ -354,7 +370,6 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				client->player.y = read_f32(&read_ptr);
 				client->player.rot = read_f32(&read_ptr);
 
-				read_buf_size -= 13;
 				break;
 
 			case CMT_SHOOT_BULLET:
@@ -367,8 +382,11 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 					break;
 				}
 
-				if (!client->active)
+				read_buf_size -= 13;
+
+				if (!client->active || !Client_is_alive(client))
 				{
+					printf("player tried to shoot while dead\n");
 					break;
 				}
 
@@ -383,8 +401,6 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				bullet_x = read_f32(&read_ptr);
 				bullet_y = read_f32(&read_ptr);
 				bullet_heading = read_f32(&read_ptr);
-
-				read_buf_size -= 13;
 
 				// Add a bullet to the bullets array
 
@@ -476,7 +492,7 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 
 		// Free the write queue node we just processed
 
-		done_io = 1;
+		done_io = true;
 		next_wq_node = client->write_queue->next;
 		SharedPtr_disown(client->write_queue->buf_shr_ptr);
 		free(client->write_queue);
@@ -513,7 +529,7 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 		goto ret;
 	}
 
-	done_io = 1;
+	done_io = true;
 	handle_incoming_data(clients, client, read_buf, bytes_rw);
 
 	ret:
@@ -522,32 +538,32 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 
 /**
  * @brief Sends a client all other players' positions.
+ * The health of all players, including the client itself, is also sent.
  * @param clients A pointer to the clients array.
  * @param client A pointer to the client we're sending the positions to.
  */
 void
 send_player_positions(struct Client *clients, struct Client *client)
 {
-	char *buf = malloc(1 + sizeof(client_t) + 13 * MAX_CLIENTS);
+	size_t max_buf_size = 1 + sizeof(health_t) + sizeof(client_t)
+		+ 13 * MAX_CLIENTS;
+	size_t buf_size = 1 + sizeof(health_t) + sizeof(client_t);
+
+	char *buf = malloc(max_buf_size);
 	char *ptr = buf;
-	size_t buf_size = 1;
-
-	#if MAX_CLIENTS > 255
-	#error To support more than 255 clients, \
-		read the comment below this line first
-	#endif
-
-	// Follow the "Increase to support more than 255 clients" comments in all
-	// files of this project
 
 	client_t num_clients = 0;
 
 	write_u8(&ptr, SMT_PLAYER_POSITIONS);
+	write_u8(&ptr, client->player.health);
+
 	ptr += sizeof(client_t); // Leave room for the number of clients
 
 	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (Client_is_active(clients + i) && clients + i != client)
+		if (Client_is_active(clients + i)
+			&& Client_is_alive(clients + i)
+			&& clients + i != client)
 		{
 			write_f32(&ptr, clients[i].player.x);
 			write_f32(&ptr, clients[i].player.y);
@@ -569,12 +585,69 @@ send_player_positions(struct Client *clients, struct Client *client)
 
 	// Write the number of clients
 
-	*(client_t *) (buf + 1) = num_clients;
-	buf_size++;
+	*(client_t *) (buf + 2) = num_clients;
 
 	// Send the message
 
 	message_client(client, buf, buf_size);
+}
+
+/**
+ * @brief Returns a random integer between min and max.
+ * @param min The lower bound, inclusive.
+ * @param max The upper bound, inclusive.
+ */
+uint32_t
+random_int(uint32_t min, uint32_t max)
+{
+	uint32_t range = max - min + 1;
+	uint32_t random = rand() % range;
+	return random + min;
+}
+
+/**
+ * @brief Respawns a client if it is dead and it has been waiting long enough.
+ * @param clients A pointer to the clients array.
+ */
+void
+respawn_dead_client(struct Client *client)
+{
+	size_t buf_size = 9;
+	char *buf = malloc(buf_size);
+	char *ptr = buf;
+
+	float respawn_x = random_int(0, MAP_WIDTH);
+	float respawn_y = random_int(0, MAP_HEIGHT);
+
+	if (!Client_is_alive(client) && now() - client->kill_time
+		>= RESPAWN_WAITING_TIME_USEC)
+	{
+		write_u8(&ptr, SMT_RESPAWN);
+		write_f32(&ptr, respawn_x);
+		write_f32(&ptr, respawn_y);
+
+		client->player.health = MAX_HEALTH;
+
+		message_client(client, buf, buf_size);
+	}
+}
+
+/**
+ * @brief Sets a client's health to 0 and schedules it to respawn.
+ * @param client The client to kill.
+ */
+void
+kill_client(struct Client *client)
+{
+	size_t buf_size = 1;
+	char *buf = malloc(buf_size);
+	char *ptr = buf;
+
+	write_u8(&ptr, SMT_DIE);
+	message_client(client, buf, buf_size);
+
+	client->player.health = 0;
+	client->kill_time = now();
 }
 
 /**
@@ -584,12 +657,9 @@ send_player_positions(struct Client *clients, struct Client *client)
 void
 hit_client(struct Client *client)
 {
-	if (BULLET_DAMAGE > client->player.health)
+	if (BULLET_DAMAGE >= client->player.health)
 	{
-		client->player.health = 0;
-
-		printf("client %d died\n",
-			client->fd);
+		kill_client(client);
 	}
 	else
 	{
@@ -640,7 +710,8 @@ handle_bullet_hits(struct Client *clients)
 {
 	for (size_t i = 0; i < MAX_CLIENTS; i++)
 	{
-		if (Client_is_active(clients + i))
+		if (Client_is_active(clients + i)
+			&& Client_is_alive(clients + i))
 		{
 			handle_bullet_hits_for_client(clients + i);
 		}
@@ -688,13 +759,13 @@ serve(int server_fd)
 	struct sockaddr_in client_address;
 	socklen_t client_address_size = sizeof(client_address);
 
-	uint8_t done_io;
+	bool done_io;
 
 	latest_dt_update_time = latest_server_tick_time = now();
 
-	while (1)
+	while (true)
 	{
-		done_io = 0;
+		done_io = false;
 
 		// If there is a new connection, accept it
 
@@ -714,7 +785,7 @@ serve(int server_fd)
 			goto io;
 		}
 
-		done_io = 1;
+		done_io = true;
 		set_nonblocking(new_client_fd);
 
 		client_index = add_client(clients, client_index, new_client_fd);
@@ -737,12 +808,13 @@ serve(int server_fd)
 			{
 				if (handle_io(clients, clients + i, &client_index))
 				{
-					done_io = 1;
+					done_io = true;
 				}
 			}
 		}
 
-		// Broadcast player positions and removed bullets to clients
+		// Broadcast player positions and removed bullets to clients,
+		// and respawn dead clients
 
 		if (now() - latest_server_tick_time >= USEC_PER_SERVER_TICK)
 		{
@@ -750,15 +822,21 @@ serve(int server_fd)
 			{
 				if (Client_is_active(clients + i))
 				{
-					// Player positions
-
-					send_player_positions(clients, clients + i);
-					latest_server_tick_time = now();
-					done_io = 1;
+					respawn_dead_client(clients + i);
+					done_io = true;
 				}
 			}
 
-			// Removed bullets
+			for (client_t i = 0; i < MAX_CLIENTS; i++)
+			{
+				if (Client_is_active(clients + i))
+				{
+					send_player_positions(clients, clients + i);
+
+					latest_server_tick_time = now();
+					done_io = true;
+				}
+			}
 
 			send_deleted_bullets(clients);
 		}
@@ -787,5 +865,6 @@ serve(int server_fd)
 int
 main(int argc, char **argv)
 {
+	srand(time(NULL));
 	serve(create_server());
 }

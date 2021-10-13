@@ -13,6 +13,7 @@ setup_io(void)
 	player.x = MAP_WIDTH / 2;
 	player.y = MAP_HEIGHT / 2;
 	player.rot = 0;
+	player.health = MAX_HEALTH;
 
 	raw_mouse_y = MAP_HEIGHT / 2;
 	raw_mouse_x = INT32_MAX;
@@ -169,7 +170,8 @@ handle_events(void)
 
 	// Shoot
 
-	if (shooting && now() - latest_shoot_time >= BULLET_RELOAD_SPEED)
+	if (shooting && now() - latest_shoot_time >= BULLET_RELOAD_SPEED
+		/* && player.health > 0 */)
 	{
 		bullet_x = player.x + (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * cos(player.rot);
 		bullet_y = player.y + (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * sin(player.rot);
@@ -204,7 +206,8 @@ handle_events(void)
 				break;
 
 			case SMT_PLAYER_POSITIONS:
-				if (read_buf_size < (sizeof(player_t) + 1))
+				if (read_buf_size < (1 + sizeof(health_t)
+					+ sizeof(player_t)))
 				{
 					fprintf(stderr,
 						"Received a SMT_PLAYER_POSITIONS message of invalid length %lu\n",
@@ -212,8 +215,7 @@ handle_events(void)
 					break;
 				}
 
-				// Increase to support more than 255 clients
-
+				player.health = read_u8(&read_ptr);
 				num_clients = read_u8(&read_ptr);
 				delete_other_players();
 
@@ -227,7 +229,8 @@ handle_events(void)
 					add_other_player(temp_x, temp_y, temp_rot, temp_health);
 				}
 
-				read_buf_size -= 1 + sizeof(player_t) + 13 * num_clients;
+				read_buf_size -= 1 + sizeof(health_t) + sizeof(player_t)
+					+ 13 * num_clients;
 				break;
 
 			case SMT_SPAWN_BULLET:
@@ -268,6 +271,35 @@ handle_events(void)
 				}
 
 				read_buf_size -= 9 + size * sizeof(bullet_id_t);
+				break;
+
+			case SMT_DIE:
+				if (read_buf_size < 1)
+				{
+					fprintf(stderr,
+						"Received a SMT_DIE message of invalid length %lu\n",
+						read_buf_size);
+					break;
+				}
+
+				player.health = 0;
+				read_buf_size -= 1;
+				break;
+
+			case SMT_RESPAWN:
+				if (read_buf_size < 9)
+				{
+					fprintf(stderr,
+						"Received a SMT_RESPAWN message of invalid length %lu\n",
+						read_buf_size);
+					break;
+				}
+
+				player.x = read_f32(&read_ptr);
+				player.y = read_f32(&read_ptr);
+				player.health = MAX_HEALTH;
+
+				read_buf_size -= 9;
 				break;
 
 			default:

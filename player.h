@@ -41,6 +41,7 @@ untranslate(int x, int y)
 
 /**
  * @brief Updates the position and rotation of the player and renders it.
+ * The position of the player is only updated if the player is alive.
  * @param dx The change in x of the tank.
  * @param dy The change in y of the tank.
  * @param pointer_dx The change in x of the pointer.
@@ -49,6 +50,11 @@ untranslate(int x, int y)
 void
 update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy)
 {
+	if (player.health == 0)
+	{
+		return;
+	}
+
 	float mult = 1;
 
 	if (abs(dx) + abs(dy) == 2)
@@ -88,6 +94,7 @@ update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy)
 	// Render player
 
 	render_tank(&player);
+	render_health_bar(&player);
 }
 
 /**
