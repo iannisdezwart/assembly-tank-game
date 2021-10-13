@@ -1,17 +1,12 @@
-MAIN_CFLAGS = -g -O3 -Wall -lSDL2 -lSDL2_ttf -lm
+CLIENT_CFLAGS = -g -O3 -Wall -lSDL2 -lSDL2_ttf -lm
 SERVER_CFLAGS = -g -O3 -Wall -lm
-TEST_CLIENT_CFLAGS = -g -O3 -Wall
 
-all: main server
+all: tank_game_client tank_game_server
 
-.PHONY: main
-main: main.c
-	$(CC) main.c -o main $(MAIN_CFLAGS)
+.PHONY: tank_game_client
+tank_game_client: tank_game_client.c
+	$(CC) tank_game_client.c -o tank_game_client $(CLIENT_CFLAGS)
 
-.PHONY: server
-server: server.c
-	$(CC) server.c -o server $(SERVER_CFLAGS)
-
-.PHONY: test_client
-test_client: test_client.c
-	$(CC) test_client.c -o test_client $(TEST_CLIENT_CFLAGS)
+.PHONY: tank_game_server
+tank_game_server: tank_game_server.c
+	$(CC) tank_game_server.c -o tank_game_server $(SERVER_CFLAGS)

@@ -1,6 +1,5 @@
 .vscode/
 old/
-main
-test_client
-server
+tank_game_client
+tank_game_server
 *.dSYM
