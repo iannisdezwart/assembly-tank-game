@@ -13,7 +13,7 @@ setup_io(void)
 	player.x = MAP_WIDTH / 2;
 	player.y = MAP_HEIGHT / 2;
 	player.rot = 0;
-	player.health = MAX_HEALTH;
+	player.health = 0;
 
 	raw_mouse_y = MAP_HEIGHT / 2;
 	raw_mouse_x = INT32_MAX;
@@ -144,7 +144,8 @@ handle_events(void)
 	}
 
 	clear_screen();
-	render_border();
+	render_map_grid();
+	render_map_border();
 
 	// Get relative mouse position to player
 
