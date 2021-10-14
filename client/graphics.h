@@ -238,6 +238,26 @@ fill_circle(int x_centre, int y_centre, uint32_t radius)
 }
 
 /**
+ * @brief Render an SDL_Surface onto the frame.
+ */
+void
+render_surface(struct SDL_Surface *surface, int x, int y,
+	uint32_t width, uint32_t height)
+{
+	SDL_Texture *texture;
+	SDL_Rect texture_rect;
+
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+	texture_rect.x = x;
+	texture_rect.y = y;
+	texture_rect.w = width;
+	texture_rect.h = height;
+
+	SDL_RenderCopy(renderer, texture, NULL, &texture_rect);
+}
+
+/**
  * @brief Renders text onto the frame.
  * @param font The font to use.
  * @param text The text to write.

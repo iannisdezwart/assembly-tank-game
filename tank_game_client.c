@@ -29,6 +29,7 @@
 #include "shared/map.h"
 #include "client/map.h"
 #include "shared/drop.h"
+#include "client/drop.h"
 #include "shared/bullet.h"
 #include "client/bullet.h"
 #include "client/player.h"

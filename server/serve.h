@@ -69,7 +69,8 @@ serve(int server_fd)
 			}
 		}
 
-		// Broadcast player positions and removed bullets to clients,
+		// Perform a server tick:
+		// broadcast player positions and removed bullets to clients,
 		// and respawn dead clients
 
 		if (now() - latest_server_tick_time >= USEC_PER_SERVER_TICK)
@@ -95,6 +96,13 @@ serve(int server_fd)
 			}
 
 			send_deleted_bullets(clients);
+
+			if (!drops_full() && time_for(DROP_INTERVAL))
+			{
+				gen_drop(clients);
+			}
+
+			n_server_ticks++;
 		}
 
 		// Update bullets and check if players are hit

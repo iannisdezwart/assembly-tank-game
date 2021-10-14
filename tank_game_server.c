@@ -37,6 +37,7 @@
 #include "shared/random.h"
 #include "shared/shared_ptr.h"
 #include "shared/timing.h"
+#include "server/timing.h"
 #include "shared/map.h"
 #include "shared/tank.h"
 #include "server/write_queue.h"

@@ -60,6 +60,10 @@ handle_events(void)
 	bullet_id_t temp_bullet_id;
 	uint64_t size;
 
+	int drop_x;
+	int drop_y;
+	enum DropType drop_type;
+
 	char read_buf[READ_BUF_SIZE];
 	char *read_ptr;
 	ssize_t read_buf_size;
@@ -151,10 +155,12 @@ handle_events(void)
 
 	pointer = untranslate(raw_mouse_x, raw_mouse_y);
 
+	render_drops();
+
+	update_other_players();
 	update_player(move_right - move_left, move_down - move_up,
 		pointer.x - player.x, pointer.y - player.y);
 
-	update_other_players();
 	update_bullets();
 
 	render_bullets();
@@ -198,7 +204,7 @@ handle_events(void)
 					fprintf(stderr,
 						"Received a SMT_HANDSHAKE message of invalid length %lu\n",
 						read_buf_size);
-					break;
+					goto next_msg;
 				}
 
 				client_id = read_u32(&read_ptr);
@@ -213,7 +219,7 @@ handle_events(void)
 					fprintf(stderr,
 						"Received a SMT_PLAYER_POSITIONS message of invalid length %lu\n",
 						read_buf_size);
-					break;
+					goto next_msg;
 				}
 
 				player.health = read_u8(&read_ptr);
@@ -240,7 +246,7 @@ handle_events(void)
 					fprintf(stderr,
 						"Received a SMT_SPAWN_BULLET message of invalid length %lu\n",
 						read_buf_size);
-					break;
+					goto next_msg;
 				}
 
 				temp_bullet_id = read_u64(&read_ptr);
@@ -260,7 +266,7 @@ handle_events(void)
 					fprintf(stderr,
 						"Received a SMT_DELETED_BULLETS message of invalid length %lu\n",
 						read_buf_size);
-					break;
+					goto next_msg;
 				}
 
 				size = read_u64(&read_ptr);
@@ -280,7 +286,7 @@ handle_events(void)
 					fprintf(stderr,
 						"Received a SMT_DIE message of invalid length %lu\n",
 						read_buf_size);
-					break;
+					goto next_msg;
 				}
 
 				player.health = 0;
@@ -293,7 +299,7 @@ handle_events(void)
 					fprintf(stderr,
 						"Received a SMT_RESPAWN message of invalid length %lu\n",
 						read_buf_size);
-					break;
+					goto next_msg;
 				}
 
 				player.x = read_f32(&read_ptr);
@@ -303,6 +309,24 @@ handle_events(void)
 				read_buf_size -= 9;
 				break;
 
+			case SMT_SPAWN_DROP:
+				if (read_buf_size < 10)
+				{
+					fprintf(stderr,
+						"Received a SMT_SPAWN_DROP message of invalid length %lu\n",
+						read_buf_size);
+					goto next_msg;
+				}
+
+				drop_x = read_u32(&read_ptr);
+				drop_y = read_u32(&read_ptr);
+				drop_type = read_u8(&read_ptr);
+
+				add_drop(drop_x, drop_y, drop_type);
+
+				read_buf_size -= 10;
+				break;
+
 			default:
 				fprintf(stderr,
 					"Received unknown message from server of type %u of length %lu\n",
@@ -310,6 +334,8 @@ handle_events(void)
 				break;
 		}
 	}
+
+	next_msg:;
 
 	// Schedule next frame
 

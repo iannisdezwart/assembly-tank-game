@@ -1,4 +1,4 @@
-#define DROP_WIDTH 15
+#define DROP_WIDTH 30
 #define DROP_HEIGHT DROP_WIDTH
 
 enum DropType
@@ -62,4 +62,14 @@ del_drop(struct Drop *drop)
 		drop->type = drop[1].type;
 		drop++;
 	}
+}
+
+/**
+ * @brief Checks if the drops array is full.
+ * @returns True if the drops array is full, false otherwise.
+ */
+bool
+drops_full(void)
+{
+	return n_drops == MAX_DROPS;
 }
