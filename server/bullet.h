@@ -2,7 +2,7 @@
 
 bullet_id_t deleted_bullets[MAX_DELETED_BULLETS];
 bullet_id_t *deleted_bullets_ptr = deleted_bullets;
-bullet_id_t bullet_id_gen = 1;
+bullet_id_t bullet_id_gen = 0;
 
 /**
  * @brief Copies the id of a bullet that will be deleted to the deleted
