@@ -114,6 +114,10 @@ serve(int server_fd)
 
 		handle_drop_pickups(clients);
 
+		// Disable client powerups if they are completed
+
+		update_client_powerups();
+
 		// Update dt
 
 		dt = now() - latest_dt_update_time;

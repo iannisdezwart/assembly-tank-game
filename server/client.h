@@ -1,8 +1,17 @@
+#define CF_FAST_SHOOTING 1 << 0
+#define CF_BIG_BULLETS   1 << 1
+#define CF_SUPER_SPEED   1 << 2
+
+typedef uint8_t Client_flag_t;
+
 /**
  * @brief Structure for a client connection.
  * @param fd The client's socket file descriptor.
  * @param write_queue A pointer to the head of the write queue.
  * @param player Details about the client's tank.
+ * @param active Boolean indicating whether the client is active or not.
+ * @param kill_time The last time this client has been killed.
+ * @param flags Bit list of flags. See `CF_*` #defines.
  */
 struct Client
 {
@@ -11,7 +20,41 @@ struct Client
 	struct Tank player;
 	bool active;
 	uint64_t kill_time;
+	Client_flag_t flags;
 };
+
+/**
+ * @brief Sets a certain flag to a client.
+ * @param client The client to set a flag on.
+ * @param flag The flag to set.
+ */
+void
+Client_set_flag(struct Client *client, Client_flag_t flag)
+{
+	client->flags |= flag;
+}
+
+/**
+ * @brief Disables a certain flag from a client.
+ * @param client The client to disable a flag from.
+ * @param falg The flag to disable.
+ */
+void
+Client_disable_flag(struct Client *client, Client_flag_t flag)
+{
+	client->flags &= ~flag;
+}
+
+/**
+ * @brief Checks if a given client has a certain flag.
+ * @param client The client to check.
+ * @returns True if the client has the flag, false if not.
+ */
+bool
+Client_has_flag(struct Client *client, Client_flag_t flag)
+{
+	return client->flags & flag;
+}
 
 /**
  * @brief Checks if a given client is currently in-game.
@@ -55,6 +98,7 @@ add_client(struct Client *clients, size_t client_index, int new_client_fd)
 	clients[client_index].write_queue = NULL;
 	clients[client_index].player.health = MAX_HEALTH;
 	clients[client_index].active = false;
+	clients[client_index].flags = 0;
 
 	client_index++;
 

@@ -10,6 +10,8 @@ enum DropType
 	DT_N_ITEMS
 };
 
+#define HEAL_PACK_HEALTH 100
+
 /**
  * @brief Structure for a drop.
  * @param x The x coordinate of the drop.
@@ -25,7 +27,8 @@ struct Drop
 	uint64_t id;
 };
 
-#define MAX_DROPS 128
+#define POWERUP_DURATION_USEC (uint64_t) 1E7
+#define MAX_DROPS 20
 
 struct Drop drops[MAX_DROPS];
 size_t n_drops = 0;
@@ -104,4 +107,27 @@ bool
 drops_full(void)
 {
 	return n_drops == MAX_DROPS;
+}
+
+/**
+ * @brief A structure for a powerup.
+ * @param type The powerup type.
+ * @param time_activated When this powerup was activated.
+ */
+struct Powerup
+{
+	enum DropType type;
+	uint64_t time_activated;
+};
+
+/**
+ * @brief Copies a powerup.
+ * @param src A pointer to the drop to copy.
+ * @param dst A pointer to the destination drop.
+ */
+void
+copy_powerup(struct Powerup *src, struct Powerup *dst)
+{
+	dst->time_activated = src->time_activated;
+	dst->type           = src->type;
 }

@@ -51,6 +51,8 @@ handle_events(void)
 	int8_t shooting = 0;
 	float bullet_x;
 	float bullet_y;
+	float bullet_speed;
+	uint8_t bullet_radius;
 
 	float temp_x;
 	float temp_y;
@@ -164,8 +166,9 @@ handle_events(void)
 		pointer.x - player.x, pointer.y - player.y);
 
 	update_bullets();
-
 	render_bullets();
+
+	update_powerups();
 	render_fps_counter();
 	render_frame();
 
@@ -243,7 +246,7 @@ handle_events(void)
 				break;
 
 			case SMT_SPAWN_BULLET:
-				if (read_buf_size < 25)
+				if (read_buf_size < 30)
 				{
 					fprintf(stderr,
 						"Received a SMT_SPAWN_BULLET message of invalid length %lu\n",
@@ -255,11 +258,15 @@ handle_events(void)
 				temp_x = read_f32(&read_ptr);
 				temp_y = read_f32(&read_ptr);
 				temp_rot = read_f32(&read_ptr);
+				bullet_radius = read_u8(&read_ptr);
+				bullet_speed = read_f32(&read_ptr);
 				temp_owner = read_u32(&read_ptr);
  
-				add_bullet(temp_bullet_id, temp_x, temp_y, temp_rot, temp_owner);
+				add_bullet(temp_bullet_id, temp_x, temp_y,
+					temp_rot, bullet_radius, bullet_speed,
+					temp_owner);
 
-				read_buf_size -= 25;
+				read_buf_size -= 30;
 				break;
 
 			case SMT_DELETED_BULLETS:
@@ -352,6 +359,21 @@ handle_events(void)
 				del_drop_by_id(drop_id);
 
 				read_buf_size -= 9;
+				break;
+
+			case SMT_POWERUP:
+				if (read_buf_size < 2)
+				{
+					fprintf(stderr,
+						"Received a SMT_POWERUP message of invalid length %lu\n",
+						read_buf_size);
+					goto next_msg;
+				}
+
+				drop_type = read_u8(&read_ptr);
+				activate_powerup(drop_type);
+
+				read_buf_size -= 2;
 				break;
 
 			default:

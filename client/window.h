@@ -58,6 +58,8 @@ setup_fullscreen_window(void)
 		fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
 	}
 
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
 	// Initialise the TTF engine
 
 	if (TTF_Init() < 0)

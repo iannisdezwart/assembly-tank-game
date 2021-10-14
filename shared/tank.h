@@ -5,6 +5,9 @@
 #define TANK_GUN_WIDTH 20
 #define TANK_GUN_HEIGHT 16
 
+#define TANK_USERNAME_MARGIN_BOTTOM 24
+#define TANK_USERNAME_COLOUR 0x40, 0x40, 0x40
+
 typedef uint8_t health_t;
 #define MAX_HEALTH 255
 
@@ -14,6 +17,8 @@ typedef uint8_t health_t;
  * @param y The y coordinate of the tank.
  * @param rot The rotation of the tank.
  * @param health The health of the tank.
+ * @param username_size The size in bytes of the username.
+ * @param username The username of the player. Max size 15 chars.
  */
 struct Tank
 {
@@ -21,4 +26,6 @@ struct Tank
 	float y;
 	float rot;
 	health_t health;
+	uint8_t username_size;
+	char username[15];
 };

@@ -1,10 +1,13 @@
 #define BULLET_COLOUR 0x78, 0x78, 0xFF
 #define BULLET_COLOUR_OPPONENT 0xFF, 0x78, 0x78
-#define BULLET_RADIUS 8
+#define BULLET_RADIUS_NORMAL  8
+#define BULLET_RADIUS_BIG    16
 
-#define BULLET_SPEED 0.05
+#define BULLET_SPEED_NORMAL 0.05
+#define BULLET_SPEED_FAST   0.10
 #define BULLET_RELOAD_SPEED 100000
-#define BULLET_DAMAGE 10
+#define BULLET_DAMAGE_BIG 20
+#define BULLET_DAMAGE_NORMAL 10
 
 #define MAX_BULLETS 1024
 
@@ -20,6 +23,7 @@ struct Bullet
 
 	float heading;
 	float speed;
+	uint8_t radius;
 
 	int owner;
 };
@@ -63,16 +67,20 @@ move_bullet(struct Bullet *bullet)
  * @param x The x coordinate of the starting position of the bullet.
  * @param y The y coordinate of the starting position of the bullet.
  * @param heading The heading of the bullet.
+ * @param radius The radius of the bullet.
+ * @param speed The speed of the bullet.
  * @param owner The id of the owner of the bullet.
  */
 void
-add_bullet(bullet_id_t id, float x, float y, float heading, int owner)
+add_bullet(bullet_id_t id, float x, float y, float heading, uint8_t radius,
+	float speed, int owner)
 {
 	bullets[n_bullets].id = id;
 	bullets[n_bullets].x = x;
 	bullets[n_bullets].y = y;
 	bullets[n_bullets].heading = heading;
-	bullets[n_bullets].speed = BULLET_SPEED;
+	bullets[n_bullets].radius = radius;
+	bullets[n_bullets].speed = speed;
 	bullets[n_bullets].owner = owner;
 	bullets[n_bullets].destroy_on_next_update = false;
 

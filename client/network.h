@@ -102,10 +102,12 @@ cleanup_socket(void)
 void
 send_handshake(void)
 {
-	char buf[1];
+	char buf[17];
 	char *ptr = buf;
 
 	write_u8(&ptr, CMT_HANDSHAKE);
+	write_u8(&ptr, min(15, strlen(username)));
+	strncopy_no_null(ptr, username, 15);
 
 	write_to_socket(socket_fd, buf, sizeof(buf));
 }

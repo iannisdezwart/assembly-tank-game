@@ -141,3 +141,16 @@ write_f64(char **ptr, double data)
 	*(double *) *ptr = data;
 	*ptr += 8;
 }
+
+/**
+ * @brief Copies at most `n` bytes from a null-terminated string to a
+ * character buffer. The null terminator is not copied.
+ */
+void
+strncopy_no_null(char *dst, char *src, size_t n)
+{
+	for (size_t i = 0; i < 15 && dst[i] != '\0'; i++)
+	{
+		*src++ = dst[i];
+	}
+}

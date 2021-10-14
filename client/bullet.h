@@ -21,7 +21,7 @@ render_bullets(void)
 			set_colour_rgb(BULLET_COLOUR_OPPONENT);
 		}
 
-		fill_circle(pos_tr.x, pos_tr.y, BULLET_RADIUS);
+		fill_circle(pos_tr.x, pos_tr.y, bullet->radius);
 	}
 }
 

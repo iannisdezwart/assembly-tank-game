@@ -19,6 +19,8 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 	float bullet_x;
 	float bullet_y;
 	float bullet_heading;
+	float bullet_speed;
+	uint8_t bullet_radius;
 
 	while (read_buf_size > 0)
 	{
@@ -36,6 +38,9 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 					break;
 				}
 
+				client->player.username_size  = read_u8(&read_ptr);
+				strncopy_no_null(client->player.username, read_ptr, 15);
+
 				write_buf = malloc(5);
 				write_ptr = write_buf;
 
@@ -47,7 +52,7 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				respawn_client(client);
 				send_all_drops(client);
 
-				read_buf_size -= 1;
+				read_buf_size -= 17;
 				break;
 
 			case CMT_PLAYER_POSITION:
@@ -93,7 +98,7 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 
 				// Create buffer for message
 
-				write_buf = malloc(25);
+				write_buf = malloc(30);
 				write_ptr = write_buf;
 
 				// Get bullet data
@@ -103,9 +108,29 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				bullet_y = read_f32(&read_ptr);
 				bullet_heading = read_f32(&read_ptr);
 
+				if (Client_has_flag(client, CF_BIG_BULLETS))
+				{
+					bullet_radius = BULLET_RADIUS_BIG;
+				}
+				else
+				{
+					bullet_radius = BULLET_RADIUS_NORMAL;
+				}
+
+				if (Client_has_flag(client, CF_FAST_SHOOTING))
+				{
+					bullet_speed = BULLET_SPEED_FAST;
+				}
+				else
+				{
+					bullet_speed = BULLET_SPEED_NORMAL;
+				}
+
 				// Add a bullet to the bullets array
 
-				add_bullet(bullet_id, bullet_x, bullet_y, bullet_heading, client->fd);
+				add_bullet(bullet_id, bullet_x, bullet_y,
+					bullet_heading, bullet_radius,
+					bullet_speed, client->fd);
 
 				// Broadcast message to other clients that a new bullet has spawned
 
@@ -114,9 +139,11 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				write_f32(&write_ptr, bullet_x);
 				write_f32(&write_ptr, bullet_y);
 				write_f32(&write_ptr, bullet_heading);
+				write_u8(&write_ptr, bullet_radius);
+				write_f32(&write_ptr, bullet_speed);
 				write_u32(&write_ptr, client->fd); // Owner
 
-				broadcast(clients, write_buf, 25);
+				broadcast(clients, write_buf, 30);
 
 				break;
 

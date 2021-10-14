@@ -19,17 +19,29 @@ kill_client(struct Client *client)
 /**
  * @brief Subtracts health points from a client.
  * @param client The client to subtract health points from.
+ * @param bullet The bullet that the player is shot by.
  */
 void
-hit_client(struct Client *client)
+hit_client(struct Client *client, struct Bullet *bullet)
 {
-	if (BULLET_DAMAGE >= client->player.health)
+	health_t bullet_damage;
+
+	if (bullet->radius == BULLET_RADIUS_BIG)
+	{
+		bullet_damage = BULLET_DAMAGE_BIG;
+	}
+	else
+	{
+		bullet_damage = BULLET_DAMAGE_NORMAL;
+	}
+
+	if (bullet_damage >= client->player.health)
 	{
 		kill_client(client);
 	}
 	else
 	{
-		client->player.health -= BULLET_DAMAGE;
+		client->player.health -= bullet_damage;
 	}
 }
 
@@ -82,7 +94,7 @@ bullet_in_range(struct Bullet *bullet, struct Client *client)
 	float dx = client->player.x - bullet->x;
 	float dy = client->player.y - bullet->y;
 
-	return hypot(dx, dy) < (TANK_BODY_RADIUS + BULLET_RADIUS);
+	return hypot(dx, dy) < (TANK_BODY_RADIUS + bullet->radius);
 }
 
 /**
@@ -98,7 +110,7 @@ handle_bullet_hits_for_client(struct Client *client)
 		if (Bullet_is_active(bullets + i)
 			&& bullet_in_range(bullets + i, client))
 		{
-			hit_client(client);
+			hit_client(client, bullets + i);
 			add_to_deleted_bullets(bullets + i);
 		}
 	}
@@ -178,6 +190,8 @@ send_player_positions(struct Client *clients, struct Client *client)
 			write_f32(&ptr, clients[i].player.y);
 			write_f32(&ptr, clients[i].player.rot);
 			write_u8(&ptr, clients[i].player.health);
+			write_u8(&ptr, clients[i].player.username_size);
+			strncopy_no_null(ptr, clients[i].player.username);
 
 			buf_size += 13;
 			num_clients++;

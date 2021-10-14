@@ -1,11 +1,13 @@
-#define PLAYER_SPEED 0.03
+#define PLAYER_SPEED_NORMAL 0.03
+#define PLAYER_SPEED_SUPER 0.04
 #define MAX_PLAYERS 255 // Also change `MAX_CLIENTS` in `server.c`
 #define player_t uint8_t
 
 struct Tank player;
 struct Tank other_players[MAX_PLAYERS - 1];
 player_t num_other_players = 0;
-
+bool super_speed_enabled = false;
+char *username;
 
 /**
  * @brief Translates an in-game coordinate to a pixel on the screen.
@@ -40,6 +42,22 @@ untranslate(int x, int y)
 }
 
 /**
+ * @returns The current player speed.
+ */
+float
+get_player_speed(void)
+{
+	if (super_speed_enabled)
+	{
+		return PLAYER_SPEED_SUPER;
+	}
+	else
+	{
+		return PLAYER_SPEED_NORMAL;
+	}
+}
+
+/**
  * @brief Updates the position and rotation of the player and renders it.
  * The position of the player is only updated if the player is alive.
  * @param dx The change in x of the tank.
@@ -62,8 +80,8 @@ update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy)
 		mult = 0.707; // sqrt 2
 	}
 
-	player.x += mult * PLAYER_SPEED * dx * dt;
-	player.y += mult * PLAYER_SPEED * dy * dt;
+	player.x += mult * get_player_speed() * dx * dt;
+	player.y += mult * get_player_speed() * dy * dt;
 
 	// Map bound checking
 

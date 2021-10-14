@@ -1,6 +1,154 @@
 #define DROP_INTERVAL 500
+#define MAX_CLIENT_POWERUPS MAX_CLIENTS * DT_N_ITEMS
 
 uint64_t drop_id_gen = 0;
+
+/**
+ * @brief A structure containing a powerup and the client it belongs to.
+ * @param client The client the powerup belongs to.
+ * @param powerup The powerup.
+ */
+struct ClientPowerup
+{
+	struct Client *client;
+	struct Powerup powerup;
+};
+
+struct ClientPowerup client_powerups[MAX_CLIENT_POWERUPS];
+size_t n_client_powerups = 0;
+
+/**
+ * @brief Adds a client powerup to the client powerups array.
+ * @param client The client to which the powerup belongs to.
+ * @param type The type of powerup
+ */
+void
+add_client_powerup(struct Client *client, enum DropType type)
+{
+	struct ClientPowerup *cli_pow;
+
+	// First check if the client already has this powerup
+
+	for (cli_pow = client_powerups;
+		cli_pow < client_powerups + n_client_powerups;
+		cli_pow++)
+	{
+		if (cli_pow->client == client && cli_pow->powerup.type == type)
+		{
+			cli_pow->powerup.time_activated = now();
+			return;
+		}
+	}
+
+	// Otherwise, add a new powerup
+
+	client_powerups[n_client_powerups].client = client;
+	client_powerups[n_client_powerups].powerup.time_activated = now();
+	client_powerups[n_client_powerups].powerup.type = type;
+
+	n_client_powerups++;
+
+	// Enable flag on the client structure
+
+	switch (type)
+	{
+		case DT_FAST_SHOOTING:
+			Client_set_flag(client, CF_FAST_SHOOTING);
+			break;
+
+		case DT_BIG_BULLETS:
+			Client_set_flag(client, CF_BIG_BULLETS);
+			break;
+
+		case DT_SUPER_SPEED:
+			Client_set_flag(client, CF_SUPER_SPEED);
+			break;
+
+		default:
+			fprintf(stderr, "Cannot enable client flag for "
+				"unknown powerup of type %d\n", type);
+			break;
+	}
+}
+
+/**
+ * @brief Copies a client powerup into another location.
+ * @param src A pointer to the source client powerup.
+ * @param dst A pointer to the destination client powerup.
+ */
+void
+copy_client_powerup(struct ClientPowerup *src, struct ClientPowerup *dst)
+{
+	dst->client = src->client;
+	copy_powerup(&src->powerup, &dst->powerup);
+}
+
+/**
+ * @brief Removes a client powerup from the client powerups array.
+ * @param client_powerup The client powerup to remove.
+ */
+void
+del_client_powerup(struct ClientPowerup *client_powerup)
+{
+	// Disable flag on the client structure
+
+	switch (client_powerup->powerup.type)
+	{
+		case DT_FAST_SHOOTING:
+			Client_disable_flag(client_powerup->client,
+				CF_FAST_SHOOTING);
+			break;
+
+		case DT_BIG_BULLETS:
+			Client_disable_flag(client_powerup->client,
+				CF_BIG_BULLETS);
+			break;
+
+		case DT_SUPER_SPEED:
+			Client_disable_flag(client_powerup->client,
+				CF_SUPER_SPEED);
+			break;
+
+		default:
+			fprintf(stderr, "Cannot disable client flag for "
+				"unknown powerup of type %d\n",
+				client_powerup->powerup.type);
+			break;
+	}
+
+	n_client_powerups--;
+
+	// Move the last client powerup from the client powerups array to
+	// the location of the deleted client powerup
+	// This way `client_powerup` itself is overwritten and removed from
+	// the array
+
+	copy_client_powerup(client_powerups + n_client_powerups,
+		client_powerup);
+}
+
+/**
+ * @brief Updates all client powerups. Completed powerups are deleted.
+ * Client flags are updated if needed.
+ */
+void
+update_client_powerups(void)
+{
+	struct ClientPowerup *cli_pow;
+	uint64_t time = now();
+
+	for (cli_pow = client_powerups;
+		cli_pow < client_powerups + n_client_powerups;
+		cli_pow++)
+	{
+		if (time - cli_pow->powerup.time_activated
+			> POWERUP_DURATION_USEC)
+		{
+			del_client_powerup(cli_pow);
+			cli_pow--;
+		}
+	}
+}
 
 /**
  * @brief Generates a random drop. The drop is added to the drops array
@@ -76,6 +224,47 @@ drop_in_range(struct Drop *drop, struct Client *client)
 }
 
 /**
+ * @brief Allows a client to activate a powerup.
+ * @param client The client to give the powerup.
+ * @param drop The drop containing the ID of the powerup.
+ */
+void
+send_powerup(struct Client *client, struct Drop *drop)
+{
+	size_t buf_size;
+	char *buf;
+	char *ptr;
+
+	switch (drop->type)
+	{
+		case DT_HEAL_PACK:
+			if (client->player.health > MAX_HEALTH - HEAL_PACK_HEALTH)
+			{
+				client->player.health = MAX_HEALTH;
+			}
+			else
+			{
+				client->player.health += HEAL_PACK_HEALTH;
+			}
+
+			break;
+
+		default:
+			buf_size = 2;
+			buf = malloc(buf_size);
+			ptr = buf;
+
+			write_u8(&ptr, SMT_POWERUP);
+			write_u8(&ptr, drop->type);
+
+			add_client_powerup(client, drop->type);
+			message_client(client, buf, buf_size);
+
+			break;
+	}
+}
+
+/**
  * @brief Removes a drop from the drop array and broadcasts the id of this
  * drop to all clients so they can also remove it from their drop array.
  * @param clients A pointer to the start of the clients array.
@@ -97,6 +286,7 @@ send_del_drop(struct Client *clients, struct Drop *drop)
 
 /**
  * @brief Lets a client pick up a drop and removes the drop.
+ * The client will get a powerup.
  * @param clients A pointer to the start of the clients array.
  * @param client The client that picks up the drop.
  * @param drop The drop that is picked up.
@@ -104,6 +294,7 @@ send_del_drop(struct Client *clients, struct Drop *drop)
 void
 pickup_drop(struct Client *clients, struct Client *client, struct Drop *drop)
 {
+	send_powerup(client, drop);
 	send_del_drop(clients, drop);
 }
 

@@ -28,17 +28,26 @@
 #include "client/health_bar.h"
 #include "shared/map.h"
 #include "client/map.h"
-#include "shared/drop.h"
-#include "client/drop.h"
 #include "shared/bullet.h"
 #include "client/bullet.h"
 #include "client/player.h"
+#include "shared/drop.h"
+#include "client/drop.h"
 #include "client/render.h"
 #include "client/io.h"
 
 int
 main(int argc, char **argv)
 {
+	if (argc < 2)
+	{
+		username = "Unnamed Tank";
+	}
+	else
+	{
+		username = argv[1];
+	}
+
 	// Setup
 
 	setup_fullscreen_window();
