@@ -5,7 +5,7 @@
 uint8_t
 read_u8(char **ptr)
 {
-	uint8_t data = **ptr;
+	uint8_t data = *(uint8_t *) *ptr;
 	*ptr += 1;
 	return data;
 }
@@ -17,7 +17,7 @@ read_u8(char **ptr)
 uint16_t
 read_u16(char **ptr)
 {
-	uint16_t data = **ptr;
+	uint16_t data = *(uint16_t *) *ptr;
 	*ptr += 2;
 	return data;
 }
@@ -29,7 +29,7 @@ read_u16(char **ptr)
 uint32_t
 read_u32(char **ptr)
 {
-	uint32_t data = **ptr;
+	uint32_t data = *(uint32_t *) *ptr;
 	*ptr += 4;
 	return data;
 }
@@ -41,7 +41,7 @@ read_u32(char **ptr)
 uint64_t
 read_u64(char **ptr)
 {
-	uint64_t data = **ptr;
+	uint64_t data = *(uint64_t *) *ptr;
 	*ptr += 8;
 	return data;
 }
@@ -78,7 +78,7 @@ read_f64(char **ptr)
 void
 write_u8(char **ptr, uint8_t data)
 {
-	**ptr = data;
+	*(uint8_t *) *ptr = data;
 	*ptr += 1;
 }
 
@@ -90,7 +90,7 @@ write_u8(char **ptr, uint8_t data)
 void
 write_u16(char **ptr, uint16_t data)
 {
-	**ptr = data;
+	*(uint16_t *) *ptr = data;
 	*ptr += 2;
 }
 
@@ -102,7 +102,7 @@ write_u16(char **ptr, uint16_t data)
 void
 write_u32(char **ptr, uint32_t data)
 {
-	**ptr = data;
+	*(uint32_t *) *ptr = data;
 	*ptr += 4;
 }
 
@@ -114,7 +114,7 @@ write_u32(char **ptr, uint32_t data)
 void
 write_u64(char **ptr, uint64_t data)
 {
-	**ptr = data;
+	*(uint64_t *) *ptr = data;
 	*ptr += 8;
 }
 
