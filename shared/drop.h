@@ -29,7 +29,6 @@ struct Drop
 
 struct Drop drops[MAX_DROPS];
 size_t n_drops = 0;
-uint64_t drop_id_gen = 0;
 
 /**
  * @brief Adds a drop to the drops array.
@@ -39,12 +38,12 @@ uint64_t drop_id_gen = 0;
  * @returns A pointer to the new drop.
  */
 struct Drop *
-add_drop(int x, int y, enum DropType type)
+add_drop(int x, int y, enum DropType type, uint64_t id)
 {
 	drops[n_drops].x = x;
 	drops[n_drops].y = y;
 	drops[n_drops].type = type;
-	drops[n_drops].id = drop_id_gen++;
+	drops[n_drops].id = id;
 	n_drops++;
 
 	return drops + n_drops - 1;

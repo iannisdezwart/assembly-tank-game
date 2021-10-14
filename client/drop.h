@@ -31,12 +31,14 @@ render_drops(void)
 			default:
 				fprintf(stderr, "Unknown drop of type %u\n",
 					drop->type);
-				break;
+				goto next_drop;
 		}
 
 		p = translate(drop->x, drop->y);
 
 		render_surface(img, p.x - DROP_WIDTH / 2, p.y - DROP_HEIGHT / 2,
 			DROP_WIDTH, DROP_HEIGHT);
+
+		next_drop:;
 	}
 }

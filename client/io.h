@@ -60,9 +60,11 @@ handle_events(void)
 	bullet_id_t temp_bullet_id;
 	uint64_t size;
 
+	uint64_t drop_n;
 	int drop_x;
 	int drop_y;
 	enum DropType drop_type;
+	uint64_t drop_id;
 
 	char read_buf[READ_BUF_SIZE];
 	char *read_ptr;
@@ -310,7 +312,7 @@ handle_events(void)
 				break;
 
 			case SMT_SPAWN_DROP:
-				if (read_buf_size < 10)
+				if (read_buf_size < 9)
 				{
 					fprintf(stderr,
 						"Received a SMT_SPAWN_DROP message of invalid length %lu\n",
@@ -318,13 +320,22 @@ handle_events(void)
 					goto next_msg;
 				}
 
-				drop_x = read_u32(&read_ptr);
-				drop_y = read_u32(&read_ptr);
-				drop_type = read_u8(&read_ptr);
+				drop_n = read_u64(&read_ptr);
+				read_buf_size -= 9;
 
-				add_drop(drop_x, drop_y, drop_type);
+				for (uint64_t i = 0; i < drop_n; i++)
+				{
+					drop_x = read_u32(&read_ptr);
+					drop_y = read_u32(&read_ptr);
+					drop_type = read_u8(&read_ptr);
+					drop_id = read_u64(&read_ptr);
 
-				read_buf_size -= 10;
+					add_drop(drop_x, drop_y, drop_type,
+						drop_id);
+
+					read_buf_size -= 17;
+				}
+
 				break;
 
 			default:

@@ -110,7 +110,6 @@ send_position_tick(void)
 	write_f32(&ptr, player.x);
 	write_f32(&ptr, player.y);
 	write_f32(&ptr, player.rot);
-	write_u8(&ptr, player.health);
 
 	write_to_socket(socket_fd, buf, sizeof(buf));
 }

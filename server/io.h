@@ -45,6 +45,7 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				message_client(client, write_buf, 5);
 
 				respawn_client(client);
+				send_all_drops(client);
 
 				read_buf_size -= 1;
 				break;

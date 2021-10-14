@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
