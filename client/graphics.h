@@ -255,6 +255,7 @@ render_surface(struct SDL_Surface *surface, int x, int y,
 	texture_rect.h = height;
 
 	SDL_RenderCopy(renderer, texture, NULL, &texture_rect);
+	SDL_DestroyTexture(texture);
 }
 
 /**
