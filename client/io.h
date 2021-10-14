@@ -338,6 +338,22 @@ handle_events(void)
 
 				break;
 
+			case SMT_DESPAWN_DROP:
+				if (read_buf_size < 9)
+				{
+					fprintf(stderr,
+						"Received a SMT_DESPAWN_DROP message of invalid length %lu\n",
+						read_buf_size);
+					goto next_msg;
+				}
+
+				drop_id = read_u64(&read_ptr);
+
+				del_drop_by_id(drop_id);
+
+				read_buf_size -= 9;
+				break;
+
 			default:
 				fprintf(stderr,
 					"Received unknown message from server of type %u of length %lu\n",

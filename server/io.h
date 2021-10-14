@@ -1,6 +1,6 @@
 /**
  * @brief Handles incoming messages to the server.
- * @param clients A pointer to the clients array.
+ * @param clients A pointer to the start of the clients array.
  * @param client A pointer to the client that sent the data.
  * @param read_buf Contains the read data.
  * @param read_buf_size Number of bytes on the buffer.
@@ -131,7 +131,7 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 
 /**
  * @brief Handles IO for a client.
- * @param clients A pointer to the clients array.
+ * @param clients A pointer to the start of the clients array.
  * Needed for deleting the socket.
  * @param client A pointer to the client to handle IO for.
  * @param client_index A pointer to the index to the first unused client block.

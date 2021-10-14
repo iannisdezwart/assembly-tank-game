@@ -35,7 +35,7 @@ queue_write(struct Client *client, struct SharedPtr *buf_shr_ptr,
 
 /**
  * @brief Broadcasts a message to every client.
- * @param clients A pointer to the clients array.
+ * @param clients A pointer to the start of the clients array.
  * @param buf A pointer to the data to queue.
  * @param buf_size The number of bytes on the buffer.
  */
@@ -69,7 +69,7 @@ message_client(struct Client *client, char *buf, size_t buf_size)
 
 /**
  * @brief Broadcasts a message to every client except one.
- * @param clients A pointer to the clients array.
+ * @param clients A pointer to the start of the clients array.
  * @param skip_client A pointer to the client to skip.
  * @param buf A pointer to the data to queue.
  * @param buf_size The number of bytes on the buffer.

@@ -58,7 +58,7 @@ respawn_client(struct Client *client)
 
 /**
  * @brief Respawns a client if it is dead and it has been waiting long enough.
- * @param clients A pointer to the clients array.
+ * @param clients A pointer to the start of the clients array.
  */
 void
 respawn_dead_client(struct Client *client)
@@ -74,9 +74,9 @@ respawn_dead_client(struct Client *client)
  * @brief Checks if a bullet hits a client.
  * @param bullet The bullet to check.
  * @param client The client to check.
- * @returns 1 if the bullet is in hitting range of the client, 0 if not.
+ * @returns True if the bullet is in hitting range of the client, false if not.
  */
-uint8_t
+bool
 bullet_in_range(struct Bullet *bullet, struct Client *client)
 {
 	float dx = client->player.x - bullet->x;
@@ -93,13 +93,13 @@ bullet_in_range(struct Bullet *bullet, struct Client *client)
 void
 handle_bullet_hits_for_client(struct Client *client)
 {
-	for (size_t j = 0; j < n_bullets; j++)
+	for (size_t i = 0; i < n_bullets; i++)
 	{
-		if (Bullet_is_active(bullets + j)
-			&& bullet_in_range(bullets + j, client))
+		if (Bullet_is_active(bullets + i)
+			&& bullet_in_range(bullets + i, client))
 		{
 			hit_client(client);
-			add_to_deleted_bullets(bullets + j);
+			add_to_deleted_bullets(bullets + i);
 		}
 	}
 }
@@ -148,7 +148,7 @@ send_deleted_bullets(struct Client *clients)
 /**
  * @brief Sends a client all other players' positions.
  * The health of all players, including the client itself, is also sent.
- * @param clients A pointer to the clients array.
+ * @param clients A pointer to the start of the clients array.
  * @param client A pointer to the client we're sending the positions to.
  */
 void

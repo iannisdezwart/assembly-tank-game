@@ -38,7 +38,7 @@ Client_is_alive(struct Client *client)
 /**
  * @brief Stores `new_client_fd` onto the `clients` array.
  * If the `clients` array is full, -1 is returned.
- * @param clients A pointer to the clients' file descriptors array.
+ * @param clients A pointer to the start of the clients array.
  * @param client_index An index to the first unused block.
  * @param new_client_fd The client file descriptor to store.
  * @returns The new `client_index`: an index to the new first unused block.
@@ -68,10 +68,10 @@ add_client(struct Client *clients, size_t client_index, int new_client_fd)
 }
 
 /**
- * @brief Removes an `obsolete_client_fd` from the `clients` array.
- * @param clients A pointer to the clients' file descriptors array.
+ * @brief Removes an client from the clients array.
+ * @param clients A pointer to the start of the clients array.
  * @param obsolete_client A pointer to the client to remove.
- * @returns The new `client_index`: the index to the old file descriptor.
+ * @returns The new `client_index`: the index to the removed client.
  */
 size_t
 del_client(struct Client *clients, struct Client *obsolete_client)

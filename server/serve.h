@@ -110,6 +110,10 @@ serve(int server_fd)
 		update_bullets();
 		handle_bullet_hits(clients);
 
+		// Check if drops were picked up and handles those pickups
+
+		handle_drop_pickups(clients);
+
 		// Update dt
 
 		dt = now() - latest_dt_update_time;
