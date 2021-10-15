@@ -28,6 +28,8 @@ kill_client(struct Client *client)
 	client->kill_time = now();
 }
 
+#define KILL_REWARD 200
+
 /**
  * @brief Hits a client with a bullet.
  * Subtracts health points from a client.
@@ -53,6 +55,9 @@ hit_client(struct Client *clients, struct Client *client, struct Bullet *bullet)
 	if (bullet_damage >= client->player.health)
 	{
 		kill_client(client);
+		get_client_by_fd(clients, bullet->owner)->player.score
+			+= KILL_REWARD;
+
 	}
 	else
 	{
