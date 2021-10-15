@@ -79,6 +79,28 @@ Client_is_alive(struct Client *client)
 }
 
 /**
+ * @brief Finds a client by its file descriptor.
+ * @param clients A pointer to the start of the clients array.
+ * @param fd The file descriptor of the client.
+ * @returns A pointer to a client structure. Returns NULL if none was found.
+ */
+struct Client *
+get_client_by_fd(struct Client *clients, int fd)
+{
+	struct Client *client;
+
+	for (client = clients; client < clients + MAX_CLIENTS; client++)
+	{
+		if (Client_is_active(client) && client->fd == fd)
+		{
+			return client;
+		}
+	}
+
+	return NULL;
+}
+
+/**
  * @brief Stores `new_client_fd` onto the `clients` array.
  * If the `clients` array is full, -1 is returned.
  * @param clients A pointer to the start of the clients array.
@@ -97,6 +119,7 @@ add_client(struct Client *clients, size_t client_index, int new_client_fd)
 	clients[client_index].fd = new_client_fd;
 	clients[client_index].write_queue = NULL;
 	clients[client_index].player.health = MAX_HEALTH;
+	clients[client_index].player.score = 0;
 	clients[client_index].active = false;
 	clients[client_index].flags = 0;
 

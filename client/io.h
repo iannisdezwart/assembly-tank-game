@@ -60,6 +60,7 @@ handle_events(void)
 	float temp_y;
 	float temp_rot;
 	health_t temp_health;
+	score_t temp_score;
 	int temp_owner;
 	bullet_id_t temp_bullet_id;
 	uint64_t size;
@@ -173,6 +174,7 @@ handle_events(void)
 	render_bullets();
 
 	update_powerups();
+	render_leaderboard();
 	render_fps_counter();
 	render_frame();
 
@@ -189,8 +191,10 @@ handle_events(void)
 	if (shooting && now() - latest_shoot_time >= BULLET_RELOAD_SPEED
 		/* && player.health > 0 */)
 	{
-		bullet_x = player.x + (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * cos(player.rot);
-		bullet_y = player.y + (TANK_GUN_WIDTH + TANK_BODY_RADIUS) * sin(player.rot);
+		bullet_x = player.x + (TANK_GUN_WIDTH + TANK_BODY_RADIUS
+			+ BULLET_RADIUS_NORMAL) * cos(player.rot);
+		bullet_y = player.y + (TANK_GUN_WIDTH + TANK_BODY_RADIUS
+			+ BULLET_RADIUS_NORMAL) * sin(player.rot);
 
 		send_bullet(bullet_x, bullet_y, player.rot);
 		latest_shoot_time = now();
@@ -223,7 +227,7 @@ handle_events(void)
 
 			case SMT_PLAYER_POSITIONS:
 				if (read_buf_size < (1 + sizeof(health_t)
-					+ sizeof(player_t)))
+					+ sizeof(score_t) + sizeof(player_t)))
 				{
 					fprintf(stderr,
 						"Received a SMT_PLAYER_POSITIONS message of invalid length %lu\n",
@@ -232,11 +236,12 @@ handle_events(void)
 				}
 
 				player.health = read_u8(&read_ptr);
+				player.score = read_u16(&read_ptr);
 				num_clients = read_u8(&read_ptr);
 				delete_other_players();
 
 				read_buf_size -= 1 + sizeof(health_t)
-					+ sizeof(player_t);
+					+ sizeof(score_t) + sizeof(player_t);
 
 				for (player_t i = 0; i < num_clients; i++)
 				{
@@ -244,15 +249,17 @@ handle_events(void)
 					temp_y = read_f32(&read_ptr);
 					temp_rot = read_f32(&read_ptr);
 					temp_health = read_u8(&read_ptr);
+					temp_score = read_u16(&read_ptr);
 					username_size = read_u8(&read_ptr);
 					strncpy(username, read_ptr,
 						username_size);
 
 					read_ptr += username_size;
-					read_buf_size -= 14 + username_size;
+					read_buf_size -= 16 + username_size;
 					add_other_player(temp_x, temp_y,
 						temp_rot, temp_health,
-						username_size, username);
+						temp_score, username_size,
+						username);
 				}
 
 				break;

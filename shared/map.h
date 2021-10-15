@@ -1,2 +1,2 @@
-#define MAP_WIDTH 5000
+#define MAP_WIDTH 1000
 #define MAP_HEIGHT MAP_WIDTH

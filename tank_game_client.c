@@ -33,6 +33,7 @@
 #include "client/player.h"
 #include "shared/drop.h"
 #include "client/drop.h"
+#include "client/leaderboard.h"
 #include "client/render.h"
 #include "client/io.h"
 

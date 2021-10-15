@@ -104,6 +104,25 @@ activate_powerup(enum DropType drop_type)
 	}
 }
 
+/**
+ * @brief Checks if the player currently has a specific powerup.
+ * @param type The powerup type to check.
+ * @returns True if the player has the powerup, false if not.
+ */
+bool
+has_powerup(enum DropType type)
+{
+	for (size_t i = 0; i < n_powerups; i++)
+	{
+		if (powerups[i].type == type)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 #define POWERUP_BAR_WIDTH 200
 #define POWERUP_BAR_HEIGHT 30
 #define POWERUP_BAR_MARGIN 10

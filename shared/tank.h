@@ -12,6 +12,8 @@
 typedef uint8_t health_t;
 #define MAX_HEALTH 255
 
+typedef uint16_t score_t;
+
 /**
  * @brief A structure containing the position and health of a tank.
  * @param x The x coordinate of the tank.
@@ -30,4 +32,5 @@ struct Tank
 	health_t health;
 	uint8_t username_size;
 	char username[TANK_USERNAME_MAX_SIZE];
+	score_t score;
 };

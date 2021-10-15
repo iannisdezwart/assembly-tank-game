@@ -1,4 +1,16 @@
 /**
+ * @brief Checks if a bullet is owned by a given client.
+ * @param bullet The bullet to check.
+ * @param client The client to check.
+ * @returns True if the bullet is owned by the client, false if not.
+ */
+bool
+Bullet_is_owned_by_client(struct Bullet *bullet, struct Client *client)
+{
+	return bullet->owner == client->fd;
+}
+
+/**
  * @brief Sets a client's health to 0 and schedules it to respawn.
  * @param client The client to kill.
  */
@@ -17,12 +29,15 @@ kill_client(struct Client *client)
 }
 
 /**
- * @brief Subtracts health points from a client.
+ * @brief Hits a client with a bullet.
+ * Subtracts health points from a client.
+ * The client who shot this bullet will receive points.
+ * @param client A pointer to the start of the clients array.
  * @param client The client to subtract health points from.
  * @param bullet The bullet that the player is shot by.
  */
 void
-hit_client(struct Client *client, struct Bullet *bullet)
+hit_client(struct Client *clients, struct Client *client, struct Bullet *bullet)
 {
 	health_t bullet_damage;
 
@@ -43,10 +58,12 @@ hit_client(struct Client *client, struct Bullet *bullet)
 	{
 		client->player.health -= bullet_damage;
 	}
+
+	get_client_by_fd(clients, bullet->owner)->player.score += bullet_damage;
 }
 
 /**
- * @brief Messages a client that it may respawn and resets its health.
+ * @brief Messages a client that it may respawn and resets its health and score.
  * @param client The client to respawn.
  */
 void
@@ -64,6 +81,7 @@ respawn_client(struct Client *client)
 	write_f32(&ptr, respawn_y);
 
 	client->player.health = MAX_HEALTH;
+	client->player.score = 0;
 
 	message_client(client, buf, buf_size);
 }
@@ -100,17 +118,19 @@ bullet_in_range(struct Bullet *bullet, struct Client *client)
 /**
  * @brief Handles bullet collisions for a given client.
  * The client will receive damage and the bullet will be removed.
+ * @param clients A pointer to the start of the clients array.
  * @param client The client to check bullet collisions for.
  */
 void
-handle_bullet_hits_for_client(struct Client *client)
+handle_bullet_hits_for_client(struct Client *clients, struct Client *client)
 {
 	for (size_t i = 0; i < n_bullets; i++)
 	{
 		if (Bullet_is_active(bullets + i)
+			&& !Bullet_is_owned_by_client(bullets + i, client)
 			&& bullet_in_range(bullets + i, client))
 		{
-			hit_client(client, bullets + i);
+			hit_client(clients, client, bullets + i);
 			add_to_deleted_bullets(bullets + i);
 		}
 	}
@@ -128,7 +148,7 @@ handle_bullet_hits(struct Client *clients)
 		if (Client_is_active(clients + i)
 			&& Client_is_alive(clients + i))
 		{
-			handle_bullet_hits_for_client(clients + i);
+			handle_bullet_hits_for_client(clients, clients + i);
 		}
 	}
 }
@@ -166,9 +186,10 @@ send_deleted_bullets(struct Client *clients)
 void
 send_player_positions(struct Client *clients, struct Client *client)
 {
-	size_t max_buf_size = 1 + sizeof(health_t) + sizeof(client_t)
-		+ 13 * MAX_CLIENTS;
-	size_t buf_size = 1 + sizeof(health_t) + sizeof(client_t);
+	size_t max_buf_size = 1 + sizeof(health_t) + sizeof(score_t)
+		+ sizeof(client_t) + 16 * MAX_CLIENTS;
+	size_t buf_size = 1 + sizeof(health_t) + sizeof(score_t)
+		+ sizeof(client_t);
 
 	char *buf = malloc(max_buf_size);
 	char *ptr = buf;
@@ -177,6 +198,7 @@ send_player_positions(struct Client *clients, struct Client *client)
 
 	write_u8(&ptr, SMT_PLAYER_POSITIONS);
 	write_u8(&ptr, client->player.health);
+	write_u16(&ptr, client->player.score);
 
 	ptr += sizeof(client_t); // Leave room for the number of clients
 
@@ -190,18 +212,19 @@ send_player_positions(struct Client *clients, struct Client *client)
 			write_f32(&ptr, clients[i].player.y);
 			write_f32(&ptr, clients[i].player.rot);
 			write_u8(&ptr, clients[i].player.health);
+			write_u16(&ptr, clients[i].player.score);
 			write_u8(&ptr, clients[i].player.username_size);
 			strncpy(ptr, clients[i].player.username,
 				clients[i].player.username_size);
 
-			buf_size += 14 + clients[i].player.username_size;
+			buf_size += 16 + clients[i].player.username_size;
 			num_clients++;
 		}
 	}
 
 	// Write the number of clients
 
-	*(client_t *) (buf + 2) = num_clients;
+	*(client_t *) (buf + 4) = num_clients;
 
 	// Send the message
 

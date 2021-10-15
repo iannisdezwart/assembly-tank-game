@@ -151,15 +151,17 @@ delete_other_players(void)
  */
 void
 add_other_player(float x, float y, float rot, health_t health,
-	uint8_t username_size, char *username)
+	score_t score, uint8_t username_size, char *username)
 {
 	other_players[num_other_players].x = x;
 	other_players[num_other_players].y = y;
 	other_players[num_other_players].rot = rot;
+	other_players[num_other_players].score = score;
 	other_players[num_other_players].health = health;
 	other_players[num_other_players].username_size = username_size;
 	strncpy(other_players[num_other_players].username, username,
 		username_size);
+
 
 	num_other_players++;
 }
