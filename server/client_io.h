@@ -86,7 +86,7 @@ respawn_client(struct Client *client)
 	write_f32(&ptr, respawn_y);
 
 	client->player.health = MAX_HEALTH;
-	client->player.score = 0;
+	client->player.score /= 2;
 
 	message_client(client, buf, buf_size);
 }
