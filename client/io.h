@@ -14,6 +14,8 @@ setup_io(void)
 	player.y = MAP_HEIGHT / 2;
 	player.rot = 0;
 	player.health = 0;
+	player.username_size = strnlen(username, TANK_USERNAME_MAX_SIZE);
+	strncpy(player.username, username, TANK_USERNAME_MAX_SIZE);
 
 	raw_mouse_y = MAP_HEIGHT / 2;
 	raw_mouse_x = INT32_MAX;
@@ -61,6 +63,8 @@ handle_events(void)
 	int temp_owner;
 	bullet_id_t temp_bullet_id;
 	uint64_t size;
+	uint8_t username_size;
+	char username[TANK_USERNAME_MAX_SIZE];
 
 	uint64_t drop_n;
 	int drop_x;
@@ -231,18 +235,26 @@ handle_events(void)
 				num_clients = read_u8(&read_ptr);
 				delete_other_players();
 
+				read_buf_size -= 1 + sizeof(health_t)
+					+ sizeof(player_t);
+
 				for (player_t i = 0; i < num_clients; i++)
 				{
 					temp_x = read_f32(&read_ptr);
 					temp_y = read_f32(&read_ptr);
 					temp_rot = read_f32(&read_ptr);
 					temp_health = read_u8(&read_ptr);
+					username_size = read_u8(&read_ptr);
+					strncpy(username, read_ptr,
+						username_size);
 
-					add_other_player(temp_x, temp_y, temp_rot, temp_health);
+					read_ptr += username_size;
+					read_buf_size -= 14 + username_size;
+					add_other_player(temp_x, temp_y,
+						temp_rot, temp_health,
+						username_size, username);
 				}
 
-				read_buf_size -= 1 + sizeof(health_t) + sizeof(player_t)
-					+ 13 * num_clients;
 				break;
 
 			case SMT_SPAWN_BULLET:

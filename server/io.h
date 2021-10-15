@@ -39,7 +39,8 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				}
 
 				client->player.username_size  = read_u8(&read_ptr);
-				strncopy_no_null(client->player.username, read_ptr, 15);
+				strncpy(client->player.username, read_ptr,
+					TANK_USERNAME_MAX_SIZE);
 
 				write_buf = malloc(5);
 				write_ptr = write_buf;

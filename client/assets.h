@@ -1,7 +1,7 @@
 typedef TTF_Font Font;
 typedef SDL_Surface Image;
 
-Font *font_12px;
+Font *font_16px;
 Font *font_20px;
 Image *drop_heal_pack;
 Image *drop_fast_shooting;
@@ -62,7 +62,7 @@ load_bmp(char *bmp_file_path)
 void
 setup_assets(void)
 {
-	font_12px = load_font("assets/play_bold.ttf", 12);
+	font_16px = load_font("assets/play_bold.ttf", 16);
 	font_20px = load_font("assets/play_bold.ttf", 20);
 	drop_heal_pack = load_bmp("assets/heal_pack.bmp");
 	drop_fast_shooting = load_bmp("assets/fast_shooting.bmp");
@@ -76,7 +76,7 @@ setup_assets(void)
 void
 cleanup_assets(void)
 {
-	free_font(font_12px);
+	free_font(font_16px);
 	free_font(font_20px);
 	SDL_FreeSurface(drop_heal_pack);
 	SDL_FreeSurface(drop_fast_shooting);

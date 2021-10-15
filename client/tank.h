@@ -24,6 +24,6 @@ render_tank(struct Tank *tank)
 	// Draw username
 
 	set_colour_rgb(TANK_USERNAME_COLOUR);
-	render_text(font_12px, tank->username,
+	render_text_centred(font_16px, tank->username,
 		tr.x, tr.y - TANK_USERNAME_MARGIN_BOTTOM);
 }

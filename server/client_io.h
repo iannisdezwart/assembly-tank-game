@@ -191,9 +191,10 @@ send_player_positions(struct Client *clients, struct Client *client)
 			write_f32(&ptr, clients[i].player.rot);
 			write_u8(&ptr, clients[i].player.health);
 			write_u8(&ptr, clients[i].player.username_size);
-			strncopy_no_null(ptr, clients[i].player.username);
+			strncpy(ptr, clients[i].player.username,
+				clients[i].player.username_size);
 
-			buf_size += 13;
+			buf_size += 14 + clients[i].player.username_size;
 			num_clients++;
 		}
 	}

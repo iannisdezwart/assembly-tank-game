@@ -3,6 +3,7 @@
 
 int socket_fd;
 int client_id;
+char *username;
 
 /**
  * @brief Initialises the connection to the server.
@@ -106,8 +107,8 @@ send_handshake(void)
 	char *ptr = buf;
 
 	write_u8(&ptr, CMT_HANDSHAKE);
-	write_u8(&ptr, min(15, strlen(username)));
-	strncopy_no_null(ptr, username, 15);
+	write_u8(&ptr, strnlen(username, TANK_USERNAME_MAX_SIZE));
+	strncpy(ptr, username, TANK_USERNAME_MAX_SIZE);
 
 	write_to_socket(socket_fd, buf, sizeof(buf));
 }

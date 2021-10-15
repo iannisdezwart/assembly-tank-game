@@ -7,7 +7,6 @@ struct Tank player;
 struct Tank other_players[MAX_PLAYERS - 1];
 player_t num_other_players = 0;
 bool super_speed_enabled = false;
-char *username;
 
 /**
  * @brief Translates an in-game coordinate to a pixel on the screen.
@@ -143,14 +142,24 @@ delete_other_players(void)
 
 /**
  * @brief Adds a player to the `other_players` array.
+ * @param x The x coordinate of the other player.
+ * @param y The y coordinate of the other player.
+ * @param rot The rotation of the other player.
+ * @param health The health of the other player.
+ * @param username_size The length of the other player's username.
+ * @param username The other player's username.
  */
 void
-add_other_player(float x, float y, float rot, health_t health)
+add_other_player(float x, float y, float rot, health_t health,
+	uint8_t username_size, char *username)
 {
 	other_players[num_other_players].x = x;
 	other_players[num_other_players].y = y;
 	other_players[num_other_players].rot = rot;
 	other_players[num_other_players].health = health;
+	other_players[num_other_players].username_size = username_size;
+	strncpy(other_players[num_other_players].username, username,
+		username_size);
 
 	num_other_players++;
 }
