@@ -1,6 +1,6 @@
 CLIENT_CFLAGS = -g -no-pie -O0 -Wall -lSDL2 -lSDL2_ttf -lm
 SERVER_CFLAGS = -g -no-pie -O0 -Wall -lm
-SHARED_ASM_FILES = shared/buffer.s shared/socket_tools.s
+SHARED_ASM_FILES = shared/buffer.s shared/socket_tools.s shared/random.s
 
 all: tank_game_client tank_game_server
 
