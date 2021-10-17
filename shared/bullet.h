@@ -13,6 +13,18 @@
 
 typedef uint64_t bullet_id_t;
 
+/**
+ * @brief A structure for a bullet.
+ * @param id The unique identifier of the bullet.
+ * @param destroy_on_next_update If this flag is enabled, the bullet will
+ * despawn in the next server tick.
+ * @param x The x coordinate of the bullet.
+ * @param y The y coordinate of the bullet.
+ * @param heading The heading of the bullet.
+ * @param speed The speed of the bullet.
+ * @param radius The radius of the bullet.
+ * @param owner The unique identifier of the client owning the bullet.
+ */
 struct Bullet
 {
 	bullet_id_t id;
@@ -34,11 +46,8 @@ struct Bullet
  * @param bullet The bullet to check.
  * @returns True if the bullet is active, false otherwise.
  */
-bool
-Bullet_is_active(struct Bullet *bullet)
-{
-	return !bullet->destroy_on_next_update;
-}
+extern bool
+Bullet_is_active(struct Bullet *bullet);
 
 struct Bullet bullets_arr[MAX_BULLETS];
 struct Bullet *bullets = bullets_arr;
@@ -51,15 +60,8 @@ size_t n_bullets = 0;
  * @brief Moves a bullet forward one tick of time.
  * @param bullet The bullet to move.
  */
-void
-move_bullet(struct Bullet *bullet)
-{
-	float dx = cos(bullet->heading);
-	float dy = sin(bullet->heading);
-
-	bullet->x += dx * bullet->speed * dt;
-	bullet->y += dy * bullet->speed * dt;
-}
+extern void
+move_bullet(struct Bullet *bullet);
 
 /**
  * @brief Adds a new bullet struct to the bullet array.
@@ -71,60 +73,32 @@ move_bullet(struct Bullet *bullet)
  * @param speed The speed of the bullet.
  * @param owner The id of the owner of the bullet.
  */
-void
+extern void
 add_bullet(bullet_id_t id, float x, float y, float heading, uint8_t radius,
-	float speed, int owner)
-{
-	bullets[n_bullets].id = id;
-	bullets[n_bullets].x = x;
-	bullets[n_bullets].y = y;
-	bullets[n_bullets].heading = heading;
-	bullets[n_bullets].radius = radius;
-	bullets[n_bullets].speed = speed;
-	bullets[n_bullets].owner = owner;
-	bullets[n_bullets].destroy_on_next_update = false;
-
-	n_bullets++;
-}
+	float speed, int owner);
 
 /**
  * @brief Copies a bullet.
  * @param src The original bullet.
  * @param dst The destination for the bullet.
  */
-void
-copy_bullet(struct Bullet *src, struct Bullet *dst)
-{
-	memcpy(dst, src, sizeof(struct Bullet));
-}
+extern void
+copy_bullet(struct Bullet *dst, struct Bullet *src);
 
 /**
  * @brief Schedules a bullet to be removed in the next update.
  * @param bullet The the bullet to remove.
  */
-void
-del_bullet(struct Bullet *bullet)
-{
-	bullet->destroy_on_next_update = true;
-}
+extern void
+del_bullet(struct Bullet *bullet);
 
 /**
  * @brief Finds a bullet by its id and schedules it to be removed
  * in the next update.
  * @param bullet_id The id of the bullet to remove.
  */
-void
-del_bullet_by_id(bullet_id_t bullet_id)
-{
-	for (struct Bullet *it = bullets; it < bullets + n_bullets; it++)
-	{
-		if (it->id == bullet_id)
-		{
-			del_bullet(it);
-			return;
-		}
-	}
-}
+extern void
+del_bullet_by_id(bullet_id_t bullet_id);
 
 /**
  * @brief Updates the location of bullets.

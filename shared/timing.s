@@ -1,3 +1,6 @@
+.equ USEC_PER_DT, 100
+.equ USEC_PER_SERVER_TICK, 10000
+
 .data
 .global dt
 dt:
