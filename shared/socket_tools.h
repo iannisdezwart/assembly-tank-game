@@ -4,19 +4,8 @@
  * not wait until there is new IO, but simply skip the operation.
  * @param socket_fd The socket to put into non-blocking mode.
  */
-int
-set_nonblocking(int socket_fd)
-{
-	int flags;
-
-	#ifdef O_NONBLOCK
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1) flags = 0;
-	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-	#else
-	flags = 1;
-	return ioctl(socket_fd, FIONBIO, &flags);
-	#endif
-}
+extern int
+set_nonblocking(int socket_fd);
 
 /**
  * @brief Puts a socket in no-delay and cork mode.
@@ -27,18 +16,8 @@ set_nonblocking(int socket_fd)
  * multiple packets.
  * @param socket_fd The socket to put in no-delay mode.
  */
-void
-set_no_delay(int socket_fd)
-{
-	int flag = 1;
-
-	#ifdef TCP_NODELAY
-	setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
-	#endif
-	#ifdef TCP_CORK
-	setsockopt(socket_fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(flag));
-	#endif
-}
+extern void
+set_no_delay(int socket_fd);
 
 /**
  * @brief Flushes a socket. This ensures the data to it is written
@@ -48,24 +27,5 @@ set_no_delay(int socket_fd)
  * data isn't clottered.
  * @param socket_fd The socket flush.
  */
-void
-flush_socket(int socket_fd)
-{
-	int flag = 0;
-
-	#ifdef TCP_CORK
-	setsockopt(socket_fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(flag));
-	#endif
-	#ifdef TCP_NODELAY
-	setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
-	#endif
-
-	flag = 1;
-
-	#ifdef TCP_CORK
-	setsockopt(socket_fd, IPPROTO_TCP, TCP_CORK, &flag, sizeof(flag));
-	#endif
-	#ifdef TCP_NODELAY
-	setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
-	#endif
-}
+extern void
+flush_socket(int socket_fd);
