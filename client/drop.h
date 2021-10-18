@@ -69,7 +69,7 @@ del_powerup(struct Powerup *powerup)
 	// the deleted powerup
 	// This way `powerup` itself is overwritten and removed from the array
 
-	copy_powerup(powerups + n_powerups, powerup);
+	copy_powerup(powerup, powerups + n_powerups);
 }
 
 /**

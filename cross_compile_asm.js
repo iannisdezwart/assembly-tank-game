@@ -6,6 +6,7 @@ const CALL_STR = '<%call '
 const JMP_STR = '<%jmp '
 const REF_STR = '<%ref '
 const LBL_STR = '<%lbl '
+const GLBL_STR = '<%glbl '
 const IFMACOS_STR = '<%ifmacos '
 const IFLINUX_STR = '<%iflinux '
 
@@ -150,6 +151,16 @@ const processFile = (filename) => {
 			const labelName = file.substring(i + LBL_STR.length, end)
 
 			out += platformifyLbl(labelName)
+			i = end + 1
+
+			continue
+		}
+
+		if (peek(GLBL_STR)) {
+			const end = file.indexOf('>', i + GLBL_STR.length)
+			const labelName = file.substring(i + GLBL_STR.length, end)
+
+			out += platformifyLabel(labelName)
 			i = end + 1
 
 			continue

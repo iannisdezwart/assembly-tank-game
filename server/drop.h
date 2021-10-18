@@ -80,7 +80,7 @@ void
 copy_client_powerup(struct ClientPowerup *src, struct ClientPowerup *dst)
 {
 	dst->client = src->client;
-	copy_powerup(&src->powerup, &dst->powerup);
+	copy_powerup(&dst->powerup, &src->powerup);
 }
 
 /**

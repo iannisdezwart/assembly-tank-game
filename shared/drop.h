@@ -30,8 +30,8 @@ struct Drop
 #define POWERUP_DURATION_USEC (uint64_t) 1E7
 #define MAX_DROPS 20
 
-struct Drop drops[MAX_DROPS];
-size_t n_drops = 0;
+extern struct Drop drops[MAX_DROPS];
+extern size_t n_drops;
 
 /**
  * @brief Adds a drop to the drops array.
@@ -45,60 +45,32 @@ add_drop(int x, int y, enum DropType type, uint64_t id);
 
 /**
  * @brief Copies a drop.
- * @param src A pointer to the source drop.
  * @param dst A pointer to the destination drop.
+ * @param src A pointer to the source drop.
  */
-void
-copy_drop(struct Drop *src, struct Drop *dst)
-{
-	dst->x    = src->x;
-	dst->y    = src->y;
-	dst->type = src->type;
-	dst->id   = src->id;
-}
+extern void
+copy_drop(struct Drop *dst, struct Drop *src);
 
 /**
- * @brief Remove a drop from the drops array.
+ * @brief Removes a drop from the drops array.
  * @param drop A pointer to the drop to remove.
  */
-void
-del_drop(struct Drop *drop)
-{
-	n_drops--;
-
-	// Move the last drop from the drops array to the location of the
-	// deleted drop
-	// This way `drop` itself is overwritten and removed from the array
-
-	copy_drop(drops + n_drops, drop);
-}
+extern void
+del_drop(struct Drop *drop);
 
 /**
  * @brief Remove a drop from the drops array by id.
  * @param id The id of the drop to remove.
  */
-void
-del_drop_by_id(uint64_t id)
-{
-	struct Drop *drop = drops;
-
-	while (drop->id != id)
-	{
-		drop++;
-	}
-
-	del_drop(drop);
-}
+extern void
+del_drop_by_id(uint64_t id);
 
 /**
  * @brief Checks if the drops array is full.
  * @returns True if the drops array is full, false otherwise.
  */
-bool
-drops_full(void)
-{
-	return n_drops == MAX_DROPS;
-}
+extern bool
+drops_full(void);
 
 /**
  * @brief A structure for a powerup.
@@ -113,12 +85,8 @@ struct Powerup
 
 /**
  * @brief Copies a powerup.
- * @param src A pointer to the drop to copy.
  * @param dst A pointer to the destination drop.
+ * @param src A pointer to the drop to copy.
  */
-void
-copy_powerup(struct Powerup *src, struct Powerup *dst)
-{
-	dst->time_activated = src->time_activated;
-	dst->type           = src->type;
-}
+extern void
+copy_powerup(struct Powerup *dst, struct Powerup *src);
