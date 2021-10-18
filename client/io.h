@@ -240,6 +240,13 @@ handle_events(void)
 				num_clients = read_u8(&read_ptr);
 				delete_other_players();
 
+				#ifdef DEBUG_IO
+				printf("Received SMT_PLAYER_POSITIONS "
+					"{ %hhu, %hu, %hhu }\n",
+					player.health, player.score,
+					num_clients);
+				#endif
+
 				read_buf_size -= 1 + sizeof(health_t)
 					+ sizeof(score_t) + sizeof(player_t);
 
@@ -260,6 +267,14 @@ handle_events(void)
 						temp_rot, temp_health,
 						temp_score, username_size,
 						username);
+
+					#ifdef DEBUG_IO
+					printf("\t{ %.1f, %.1f, %.1f "
+						"%hhu, %hu, %hhu, %s }\n",
+						temp_x, temp_y, temp_rot,
+						temp_health, temp_score,
+						username_size, username);
+					#endif
 				}
 
 				break;
@@ -280,10 +295,19 @@ handle_events(void)
 				bullet_radius = read_u8(&read_ptr);
 				bullet_speed = read_f32(&read_ptr);
 				temp_owner = read_u32(&read_ptr);
- 
+
 				add_bullet(temp_bullet_id, temp_x, temp_y,
 					temp_rot, bullet_radius, bullet_speed,
 					temp_owner);
+
+				#ifdef DEBUG_IO
+				printf("Received SMT_SPAWN_BULLET "
+					"{ %lu, %.1f, %.1f, %.1f, %hhu "
+					" %.1f, %u }\n",
+					temp_bullet_id, temp_x, temp_y,
+					temp_rot, bullet_radius, bullet_speed,
+					temp_owner);
+				#endif
 
 				read_buf_size -= 30;
 				break;
@@ -299,10 +323,19 @@ handle_events(void)
 
 				size = read_u64(&read_ptr);
 
+				#ifdef DEBUG_IO
+				printf("Received SMT_DELETED_BULLETS "
+					"{ %lu }\n", size);
+				#endif
+
 				for (size_t i = 0; i < size; i++)
 				{
 					temp_bullet_id = read_u64(&read_ptr);
 					del_bullet_by_id(temp_bullet_id);
+
+					#ifdef DEBUG_IO
+					printf("\t { %lu }\n", temp_bullet_id);
+					#endif
 				}
 
 				read_buf_size -= 9 + size * sizeof(bullet_id_t);
@@ -316,6 +349,10 @@ handle_events(void)
 						read_buf_size);
 					goto next_msg;
 				}
+
+				#ifdef DEBUG_IO
+				printf("Received SMT_DIE {}\n", size);
+				#endif
 
 				player.health = 0;
 				read_buf_size -= 1;
@@ -334,6 +371,12 @@ handle_events(void)
 				player.y = read_f32(&read_ptr);
 				player.health = MAX_HEALTH;
 
+				#ifdef DEBUG_IO
+				printf("Received SMT_RESPAWN "
+					"{ %.1f, %.1f, %hhu }\n",
+					player.x, player.y, player.health);
+				#endif
+
 				read_buf_size -= 9;
 				break;
 
@@ -349,6 +392,11 @@ handle_events(void)
 				drop_n = read_u64(&read_ptr);
 				read_buf_size -= 9;
 
+				#ifdef DEBUG_IO
+				printf("Received SMT_SPAWN_DROP "
+					"{ %lu }\n", drop_n);
+				#endif
+
 				for (uint64_t i = 0; i < drop_n; i++)
 				{
 					drop_x = read_u32(&read_ptr);
@@ -358,6 +406,12 @@ handle_events(void)
 
 					add_drop(drop_x, drop_y, drop_type,
 						drop_id);
+
+					#ifdef DEBUG_IO
+					printf("\t{ %u, %u, %hhu, %lu }\n",
+						drop_x, drop_y, drop_type,
+						drop_id);
+					#endif
 
 					read_buf_size -= 17;
 				}
@@ -375,6 +429,11 @@ handle_events(void)
 
 				drop_id = read_u64(&read_ptr);
 
+				#ifdef DEBUG_IO
+				printf("Received SMT_DESPAWN_DROP "
+					"{ %lu }\n", drop_id);
+				#endif
+
 				del_drop_by_id(drop_id);
 
 				read_buf_size -= 9;
@@ -391,6 +450,11 @@ handle_events(void)
 
 				drop_type = read_u8(&read_ptr);
 				activate_powerup(drop_type);
+
+				#ifdef DEBUG_IO
+				printf("Received SMT_POWERUP "
+					"{ %hhu }\n", drop_type);
+				#endif
 
 				read_buf_size -= 2;
 				break;

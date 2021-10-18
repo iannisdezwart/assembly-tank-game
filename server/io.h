@@ -50,6 +50,10 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				client->active = true;
 				message_client(client, write_buf, 5);
 
+				#ifdef DEBUG_IO
+				printf("Received CMT_HANDSHAKE\n");
+				#endif
+
 				respawn_client(client);
 				send_all_drops(client);
 
@@ -76,6 +80,13 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				client->player.x = read_f32(&read_ptr);
 				client->player.y = read_f32(&read_ptr);
 				client->player.rot = read_f32(&read_ptr);
+
+				#ifdef DEBUG_IO
+				printf("Received CMT_PLAYER_POSITION "
+					"{ %.1f, %.1f, %.1f }\n",
+					client->player.x, client->player.y,
+					client->player.rot);
+				#endif
 
 				break;
 
@@ -108,6 +119,13 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				bullet_x = read_f32(&read_ptr);
 				bullet_y = read_f32(&read_ptr);
 				bullet_heading = read_f32(&read_ptr);
+
+				#ifdef DEBUG_IO
+				printf("Received CMT_SHOOT_BULLET "
+					"{ %lu, %.1f, %.1f, %.1f }\n",
+					bullet_id, bullet_x, bullet_y,
+					bullet_heading);
+				#endif
 
 				if (Client_has_flag(client, CF_BIG_BULLETS))
 				{

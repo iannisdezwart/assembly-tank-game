@@ -14,6 +14,8 @@
 #include <netdb.h>
 #include <errno.h>
 
+// #define DEBUG_IO
+
 #include "shared/buffer.h"
 #include "shared/socket_tools.h"
 #include "shared/network_messages.h"
