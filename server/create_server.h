@@ -38,7 +38,6 @@ create_server(void)
 	// Set socket options
 
 	set_nonblocking(server_fd);
-	set_no_delay(server_fd);
 
 	return server_fd;
 }

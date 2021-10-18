@@ -207,8 +207,6 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 		bytes_rw = write(client->fd, client->write_queue->buf_shr_ptr->ptr,
 			client->write_queue->buf_size);
 
-		flush_socket(client->fd);
-
 		if (bytes_rw < 0)
 		{
 			fprintf(stderr, "Wasn't able to write %lu bytes to client socket %d\n",
