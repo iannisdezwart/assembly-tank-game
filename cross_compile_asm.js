@@ -30,6 +30,7 @@ const FILE_LIST = [
 	'shared/socket_tools.s',
 	'shared/timing.s',
 	'shared/drop.s',
+	'client/assets.s',
 ]
 
 const processFile = (filename) => {

@@ -16,31 +16,15 @@ Image *drop_super_speed;
  * @returns A font structure for the font.
  * @warning Use `free_font()` to free the memory used by the font.
  */
-Font *
-load_font(const char *ttf_file_path, int px_size)
-{
-	Font *font;
-
-	font = TTF_OpenFont(ttf_file_path, px_size);
-
-	if (font == NULL)
-	{
-		fprintf(stderr, "Failed to load font: %s\n", TTF_GetError());
-		exit(1);
-	}
-
-	return font;
-}
+extern Font *
+load_font(const char *ttf_file_path, int px_size);
 
 /**
  * @brief Frees the memory used for a font.
  * @param font The font structure to free.
  */
-void
-free_font(Font *font)
-{
-	TTF_CloseFont(font);
-}
+extern void
+free_font(Font *font);
 
 /**
  * @brief Loads a BMP image into memory so it can be rendered to the screen
