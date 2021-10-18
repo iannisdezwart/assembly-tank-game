@@ -1,5 +1,8 @@
 .equ Bullet_SIZE, 40
 
+.L_MAP_SIZE:
+	.long   1167867904 # 5000.0
+
 /**
  * struct Bullet:
  * A structure for a bullet.
@@ -165,3 +168,94 @@ del_bullet_by_id:
 
 .L_del_bullet_by_id_stop_search:
 	ret
+
+/**
+ * Updates the location of bullets.
+ */
+.global update_bullets
+update_bullets:
+	movq n_bullets(%rip), %rax # load n_bullets
+        testq %rax, %rax           # if n_bullets == 0: don't do anything
+        je .L_update_bullets_end_ret
+
+        pushq %r12
+        pushq %rbp
+        pushq %rbx
+
+        xorl %ebx, %ebx            # i = 0
+        xorl %r12d, %r12d          # new_i = 0
+
+.L_update_bullets_next:
+        movq bullets(%rip), %rdx   # bullet = bullets
+
+	# this is a big brain way of getting a pointer to the next bullet
+
+        leaq (%rbx, %rbx, 4), %rax # rax = 5 * i
+        leaq (%rdx, %rax, 8), %rbp # bullet = bullets[rax * 8]
+
+        movq %rbp, %rdi         # arg1 = bullet
+        call move_bullet
+
+        movss 12(%rbp), %xmm0 # load bullet->x
+        pxor %xmm1, %xmm1     # load 0
+        comiss %xmm1, %xmm0   # if bullet->x <= 0: continue
+        jbe .L_update_bullets_next_continue
+
+        movss .L_MAP_SIZE(%rip), %xmm2
+        comiss %xmm0, %xmm2   # if bullet->x > MAP_SIZE: continue
+        jbe .L_update_bullets_next_continue
+
+        movss 16(%rbp), %xmm0
+        comiss %xmm1, %xmm0   # if bullet->y <= 0: continue
+        jbe .L_update_bullets_next_continue
+
+        comiss %xmm0, %xmm2   # if bullet->y > MAP_SIZE: continue
+        jbe .L_update_bullets_next_continue
+
+        cmpb $0, 8(%rbp)      # if !bullet->destroy_on_next_update: continue
+        je .L_update_bullets_next_include
+
+.L_update_bullets_next_continue:
+        addq    $1, %rbx
+        cmpq    %rbx, n_bullets(%rip)
+        ja      .L_update_bullets_next
+.L_update_bullets_end_loop:
+        movslq  %r12d, %rax          # save new_i
+
+.L_update_bullets_end:
+        movq %rax, n_bullets(%rip)   # n_bullets = new_i
+
+	# swap the pointers to the `bullets` and `new_bullets` array.
+	# this is a sneaky way to "move" the new bullets to the current bullets
+	# array without having to actually copy them.
+	# we simply relabel the `new_bullet` array as the new `bullet` array.
+
+        movq bullets(%rip), %rdx     # load pointer to bullets array
+        movq new_bullets(%rip), %rax # load pointer to new bullets array
+        movq %rdx, new_bullets(%rip) # new_bullets = bullets
+        movq %rax, bullets(%rip)     # bullets = new_bullets
+
+        popq %rbx
+        popq %rbp
+        popq %r12
+
+.L_update_bullets_end_ret:
+        ret
+
+.L_update_bullets_next_include:
+        movslq %r12d, %rax           # load new_i as 64-bit
+        movq %rbp, %rdi              # arg1 = bullet
+
+	# this is a big brain way of getting a pointer to the next bullet
+
+        leaq (%rax, %rax, 4), %rdx   # rax = 5 * new_i
+        movq new_bullets(%rip), %rax
+        leaq (%rax, %rdx, 8), %rsi   # arg2 = new_bullets + rax * 4
+        call copy_bullet
+
+        addq $1, %rbx                # i++
+        addl $1, %r12d               # new_i++
+
+        cmpq %rbx, n_bullets(%rip)   # if i < n_bullets: continue loop
+        ja .L_update_bullets_next
+        jmp .L_update_bullets_end_loop

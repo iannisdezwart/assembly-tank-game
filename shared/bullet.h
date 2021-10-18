@@ -103,39 +103,5 @@ del_bullet_by_id(bullet_id_t bullet_id);
 /**
  * @brief Updates the location of bullets.
  */
-void
-update_bullets(void)
-{
-	struct Bullet *bullet;
-	int new_i = 0;
-
-	for (int i = 0; i < n_bullets; i++)
-	{
-		bullet = bullets + i;
-
-		move_bullet(bullet);
-
-		// Keep alive bullets and remove dead bullets
-
-		if (bullet->x > 0 && bullet->x < MAP_WIDTH
-			&& bullet->y > 0 && bullet->y < MAP_HEIGHT
-			&& !bullet->destroy_on_next_update)
-		{
-			copy_bullet(bullet, new_bullets + new_i);
-			new_i++;
-		}
-	}
-
-	// Update the number of bullets
-
-	n_bullets = new_i;
-
-	// Swap the pointers to the `bullets` and `new_bullets` array
-	// This is a sneaky way to "move" the new bullets to the current bullets
-	// array without having to actually copy them.
-	// We simply relabel the `new_bullet` array as the new `bullet` array.
-
-	bullet = new_bullets;
-	new_bullets = bullets;
-	bullets = bullet;
-}
+extern void
+update_bullets(void);
