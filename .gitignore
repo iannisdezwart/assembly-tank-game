@@ -4,3 +4,4 @@ tank_game_client
 tank_game_server
 *.dSYM
 .DS_Store
+*.pp.s

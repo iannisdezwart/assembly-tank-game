@@ -12,8 +12,7 @@
  * Adds a handle to a shared pointer.
  * @rdi ptr The shared pointer to own.
  */
-.global SharedPtr_own
-SharedPtr_own:
+<%fn SharedPtr_own>
 	addq $1, (%rdi) # ptr->handles++
 	ret
 
@@ -23,8 +22,7 @@ SharedPtr_own:
  * freed.
  * @rdi ptr The shared pointer to disown.
  */
-.global SharedPtr_disown
-SharedPtr_disown:
+<%fn SharedPtr_disown>
 	movq (%rdi), %rax   # handles = ptr->handles
 	testq %rax, %rax    # if handles == 0: error
 	je .L_SharedPtr_disown_err_zero_handles
@@ -42,30 +40,29 @@ SharedPtr_disown:
 .L_SharedPtr_disown_err_zero_handles:
 	# this should never happen by the way
 
-	movq $.L_SharedPtr_disown_err_zero_handles_str, %rdi
-	jmp puts            # return address is already pushed on the stack
+	movq .L_SharedPtr_disown_err_zero_handles_str(%rip), %rdi
+	<%jmp puts>         # return address is already pushed on the stack
 
 .L_SharedPtr_disown_free:
 	movq %rdi, %r15     # save ptr
 
 	movq 8(%rdi), %rdi  # arg1 = ptr->handles
-	call free
+	<%call free>
 
 	movq %r15, %rdi     # arg1 = ptr
-	jmp free
+	<%jmp free>
 
 /**
  * Creates a shared pointer with a specified number of initial handles.
  * @rdi ptr The pointer to the object to share.
  * @rsi initial_handles The number of initial owners of the shared pointer.
  */
-.global SharedPtr_create
-SharedPtr_create:
+<%fn SharedPtr_create>
 	movq %rdi, %r15    # save ptr
 	movq %rsi, %r14    # save initial_handles
 
 	movl $SharedPointer_SIZE, %edi # malloc size
-	call malloc
+	<%call malloc>
 
 	movq %r14, (%rax)  # shared_ptr->handles = initial_handles
 	movq %r15, 8(%rax) # shared_ptr->ptr = ptr

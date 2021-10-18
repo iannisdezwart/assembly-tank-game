@@ -2,8 +2,7 @@
  * Reads 1 byte from a buffer.
  * @rdi ptr A pointer to a pointer to the buffer.
  */
-.global read_u8
-read_u8:
+<%fn read_u8>
 	movq (%rdi), %rax   # load *ptr
 	movzbl (%rax), %r8d # data = **ptr
 	addq $1, %rax       # *ptr += 1
@@ -15,8 +14,7 @@ read_u8:
  * Reads 2 bytes from a buffer.
  * @rdi ptr A pointer to a pointer to the buffer.
  */
-.global read_u16
-read_u16:
+<%fn read_u16>
 	movq (%rdi), %rax   # load *ptr
 	movzwl (%rax), %r8d # data = **ptr
 	addq $2, %rax       # *ptr += 2
@@ -28,8 +26,7 @@ read_u16:
  * Reads 4 bytes from a buffer.
  * @rdi ptr A pointer to a pointer to the buffer.
  */
-.global read_u32
-read_u32:
+<%fn read_u32>
 	movq (%rdi), %rax   # load *ptr
 	movl (%rax), %r8d   # data = **ptr
 	addq $4, %rax       # *ptr += 4
@@ -42,8 +39,7 @@ read_u32:
  * Reads 8 bytes from a buffer.
  * @rdi ptr A pointer to a pointer to the buffer.
  */
-.global read_u64
-read_u64:
+<%fn read_u64>
 	movq (%rdi), %rax   # load *ptr
 	movq (%rax), %r8    # data = **ptr
 	addq $8, %rax       # *ptr += 8
@@ -55,8 +51,7 @@ read_u64:
  * Reads 4 bytes from a buffer.
  * @rdi ptr A pointer to a pointer to the buffer.
  */
-.global read_f32
-read_f32:
+<%fn read_f32>
 	movq (%rdi), %rax   # load *ptr
 	movss (%rax), %xmm0 # data = **ptr
 	addq $4, %rax       # *ptr += 4
@@ -67,8 +62,7 @@ read_f32:
  * Reads 8 bytes from a buffer.
  * @rdi ptr A pointer to a pointer to the buffer.
  */
-.global read_f64
-read_f64:
+<%fn read_f64>
 	movq (%rdi), %rax   # load *ptr
 	movsd (%rax), %xmm0 # data = **ptr
 	addq $8, %rax       # *ptr += 8
@@ -80,8 +74,7 @@ read_f64:
  * @rdi ptr A pointer to a pointer to the buffer.
  * @sil data The data to write.
  */
-.global write_u8
-write_u8:
+<%fn write_u8>
 	movq (%rdi), %rax # load *ptr
 	movb %sil, (%rax) # **ptr = data
 	addq $1, (%rdi)   # *ptr += 1
@@ -92,8 +85,7 @@ write_u8:
  * @rdi ptr A pointer to a pointer to the buffer.
  * @si data The data to write.
  */
-.global write_u16
-write_u16:
+<%fn write_u16>
 	movq (%rdi), %rax # load *ptr
 	movw %si, (%rax) # **ptr = data
 	addq $2, (%rdi)   # *ptr += 2
@@ -104,8 +96,7 @@ write_u16:
  * @rdi ptr A pointer to a pointer to the buffer.
  * @esi data The data to write.
  */
-.global write_u32
-write_u32:
+<%fn write_u32>
 	movq (%rdi), %rax # load *ptr
 	movl %esi, (%rax) # **ptr = data
 	addq $4, (%rdi)   # *ptr += 4
@@ -116,8 +107,7 @@ write_u32:
  * @rdi ptr A pointer to a pointer to the buffer.
  * @rsi data The data to write.
  */
-.global write_u64
-write_u64:
+<%fn write_u64>
 	movq (%rdi), %rax # load *ptr
 	movq %rsi, (%rax) # **ptr = data
 	addq $8, (%rdi)   # *ptr += 8
@@ -128,8 +118,7 @@ write_u64:
  * @rdi ptr A pointer to a pointer to the buffer.
  * @xmm0 data The data to write.
  */
-.global write_f32
-write_f32:
+<%fn write_f32>
 	movq (%rdi), %rax   # load *ptr
 	movss %xmm0, (%rax) # **ptr = data
 	addq $4, (%rdi)     # *ptr += 4
@@ -140,8 +129,7 @@ write_f32:
  * @rdi ptr A pointer to a pointer to the buffer.
  * @xmm0 data The data to write.
  */
-.global write_f64
-write_f64:
+<%fn write_f64>
 	movq (%rdi), %rax   # load *ptr
 	movsd %xmm0, (%rax) # **ptr = data
 	addq $8, (%rdi)     # *ptr += 4

@@ -3,13 +3,14 @@
  * @edi min The lower bound, inclusive.
  * @esi max The upper bound, inclusive.
  */
-.global random_int
-random_int:
+<%fn random_int>
+	subq $8, %rsp
+
 	movl %edi, %ebx          # save min
 	movl %esi, %r14d         # save max
 
 	xorl %eax, %eax          # clear %eax
-	call rand                # rand_num = rand()
+	<%call rand>             # rand_num = rand()
 
 	subl %ebx, %r14d         # range = max - min
 	leal 1(%r14d), %esi      # range += 1
@@ -18,4 +19,5 @@ random_int:
 	divl %esi                # rand_num %= range
 	leal (%rdx, %rbx), %eax  # return rand_num + min
 
+	addq $8, %rsp
 	ret

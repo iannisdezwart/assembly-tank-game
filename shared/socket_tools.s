@@ -9,8 +9,7 @@
  * not wait until there is new IO, but simply skip the operation.
  * @edi socket_fd The socket to put into non-blocking mode.
  */
-.global set_nonblocking
-set_nonblocking:
+<%fn set_nonblocking>
 	# int flags @ 12(rsp)
 
 	subq $24, %rsp
@@ -19,7 +18,7 @@ set_nonblocking:
 	leaq 12(%rsp), %rdx # arg3 = &flags
 	xorl %eax, %eax     # clear %eax
 	movl $1, 12(%rsp)   # flags = 1
-	call ioctl
+	<%call ioctl>
 	addq $24, %rsp
 	ret
 
@@ -32,8 +31,7 @@ set_nonblocking:
  * multiple packets.
  * @edi socket_fd The socket to put in no-delay mode.
  */
-.global set_no_delay
-set_no_delay:
+<%fn set_no_delay>
 	# int flag @ 12(rsp)
 
 	pushq %rbp
@@ -47,14 +45,14 @@ set_no_delay:
 	movl $TCP_NODELAY, %edx    # arg3 = TCP_NODELAY
 	leaq 12(%rsp), %rcx        # arg4 = &flag
 	movl $4, %r8d              # arg5 = sizeof(flag)
-	call setsockopt
+	<%call setsockopt>
 
 	movl %r15d, %edi           # arg1 = socket_fd
 	movl $IPPROTO_TCP, %esi    # arg2 = IPPROTO_TCP
 	movl $TCP_CORK, %edx       # arg3 = TCP_NODELAY
 	leaq 12(%rsp), %rcx        # arg4 = &flag
 	movl $4, %r8d              # arg5 = sizeof(flag)
-	call setsockopt
+	<%call setsockopt>
 
 	addq $16, %rsp
 	popq %rbp
@@ -68,8 +66,7 @@ set_no_delay:
  * data isn't clottered.
  * @edi socket_fd The socket flush.
  */
-.global flush_socket
-flush_socket:
+<%fn flush_socket>
 	# int flag @ 12(rsp)
 
 	pushq %rbp
@@ -83,14 +80,14 @@ flush_socket:
 	movl $TCP_NODELAY, %edx    # arg3 = TCP_NODELAY
 	leaq 12(%rsp), %rcx        # arg4 = &flag
 	movl $4, %r8d              # arg5 = sizeof(flag)
-	call setsockopt
+	<%call setsockopt>
 
 	movl %r15d, %edi           # arg1 = socket_fd
 	movl $IPPROTO_TCP, %esi    # arg2 = IPPROTO_TCP
 	movl $TCP_CORK, %edx       # arg3 = TCP_NODELAY
 	leaq 12(%rsp), %rcx        # arg4 = &flag
 	movl $4, %r8d              # arg5 = sizeof(flag)
-	call setsockopt
+	<%call setsockopt>
 
 	movl $0, 12(%rsp)          # flag = 0
 
@@ -99,14 +96,14 @@ flush_socket:
 	movl $TCP_NODELAY, %edx    # arg3 = TCP_NODELAY
 	leaq 12(%rsp), %rcx        # arg4 = &flag
 	movl $4, %r8d              # arg5 = sizeof(flag)
-	call setsockopt
+	<%call setsockopt>
 
 	movl %r15d, %edi           # arg1 = socket_fd
 	movl $IPPROTO_TCP, %esi    # arg2 = IPPROTO_TCP
 	movl $TCP_CORK, %edx       # arg3 = TCP_NODELAY
 	leaq 12(%rsp), %rcx        # arg4 = &flag
 	movl $4, %r8d              # arg5 = sizeof(flag)
-	call setsockopt
+	<%call setsockopt>
 
 	addq $16, %rsp
 	popq %rbp

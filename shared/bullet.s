@@ -1,6 +1,6 @@
 .equ Bullet_SIZE, 40
 
-.L_MAP_SIZE:
+<%lbl .L_MAP_SIZE>
 	.long   1167867904 # 5000.0
 
 /**
@@ -22,8 +22,7 @@
  * `destroy_on_next_update` flag is set to false.
  * @rdi bullet The bullet to check.
  */
-.global Bullet_is_active
-Bullet_is_active:
+<%fn Bullet_is_active>
 	movzbl 8(%rdi), %eax # active = bullet->destroy_on_next_update
 	xorl $1, %eax        # return ~active
 	ret
@@ -32,9 +31,8 @@ Bullet_is_active:
  * Moves a bullet forward one tick of time.
  * @rdi bullet The bullet to move.
  */
-.global move_bullet
-move_bullet:
-	subq $24, %rsp           # for some reason 16 doesn't work ¯\_(ツ)_/¯
+<%fn move_bullet>
+	subq $24, %rsp
 
 	# double dx @ 0(%rsp)
 	# double dy @ 8(%rsp)
@@ -45,7 +43,7 @@ move_bullet:
 	cvtss2sd 20(%rdi), %xmm0 # arg1 = bullet->heading (cast to double)
 	leaq 8(%rsp), %rdi       # arg2 = &dy
 	movq %rsp, %rsi          # arg3 = &dx
-	call sincos
+	<%call sincos>
 
 	# next will follow some floating point magic that will compute
 	# bullet->x += dx * bullet->speed * dt
@@ -56,7 +54,7 @@ move_bullet:
 	shufps $0xe5, %xmm0, %xmm0 # drop junk
 	cvtpd2ps %xmm1, %xmm1      # doubles to floats
 	mulps %xmm1, %xmm0         # dx *= speed, dy *= speed
-	movss dt(%rip), %xmm1      # xmm1 = dt
+	movss <%ref dt>, %xmm1     # xmm1 = dt
 	shufps $0xe0, %xmm1, %xmm1 # drop junk
 	mulps %xmm1, %xmm0         # dx *= dt, dy *= dt
 	movq 12(%r15), %xmm1       # xmm1 = [ bullet->x, bullet_y ]
@@ -76,32 +74,31 @@ move_bullet:
  * @xmm3 speed The speed of the bullet.
  * @edx owner The id of the owner of the bullet.
  */
-.global add_bullet
-add_bullet:
-	movq bullets(%rip), %r15   # load address of bullets array
-	movq n_bullets(%rip), %rax # load n_bullets
+<%fn add_bullet>
+	movq <%ref bullets>, %r15   # load address of bullets array
+	movq <%ref n_bullets>, %rax # load n_bullets
 
 	# this is a big brain way of getting a pointer to the next bullet
 
-	leaq (%rax, %rax, 4), %rcx # rcx = 5 * n_bullets
-	leaq (%r15, %rcx, 8), %r15 # bullet = bullets[rcx * 8]
+	leaq (%rax, %rax, 4), %rcx  # rcx = 5 * n_bullets
+	leaq (%r15, %rcx, 8), %r15  # bullet = bullets[rcx * 8]
 
-	movq  %rdi, (%r15)         # bullet->id = id
-	movb $0, 8(%r15)           # bullet->destroy_on_next_update = false
+	movq  %rdi, (%r15)          # bullet->id = id
+	movb $0, 8(%r15)            # bullet->destroy_on_next_update = false
 
 	# this is a big brain way of collecting the x, y, heading and speed
 	# into a single xmm register
 
-	unpcklps %xmm3, %xmm2      # interleave heading and speed
-	unpcklps %xmm1, %xmm0      # interleave x and y
-	movlhps %xmm2, %xmm0       # append xmm2 to xmm0
-	movups %xmm0, 12(%r15)     # copy to memory
+	unpcklps %xmm3, %xmm2       # interleave heading and speed
+	unpcklps %xmm1, %xmm0       # interleave x and y
+	movlhps %xmm2, %xmm0        # append xmm2 to xmm0
+	movups %xmm0, 12(%r15)      # copy to memory
 
-	movb %sil, 28(%r15)        # bullet->radius = radius
-	movl %edx, 32(%r15)        # bullet->owner = owner
+	movb %sil, 28(%r15)         # bullet->radius = radius
+	movl %edx, 32(%r15)         # bullet->owner = owner
 
-	addq $1, %rax              # increment n_bullets
-	movq %rax, n_bullets(%rip) # store n_bullets
+	addq $1, %rax               # increment n_bullets
+	movq %rax, <%ref n_bullets> # store n_bullets
 	ret
 
 /**
@@ -109,8 +106,7 @@ add_bullet:
  * @rdi dst The destination for the bullet.
  * @rsi src The original bullet.
  */
-.global copy_bullet
-copy_bullet:
+<%fn copy_bullet>
 	# bytes 0-15
 
 	movdqu (%rsi), %xmm0   # load src
@@ -132,8 +128,7 @@ copy_bullet:
  * Schedules a bullet to be removed in the next update.
  * @rdi bullet The the bullet to remove.
  */
-.global del_bullet
-del_bullet:
+<%fn del_bullet>
 	movb $1, 8(%rdi) # set the destroy_on_next_update flag
 	ret
 
@@ -142,29 +137,28 @@ del_bullet:
  * in the next update.
  * @rdi bullet_id The id of the bullet to remove.
  */
-.global del_bullet_by_id
-del_bullet_by_id:
-	movq n_bullets(%rip), %rdx # load n_bullets
-	movq bullets(%rip), %rax   # pointer to start of bullets array
+<%fn del_bullet_by_id>
+	movq <%ref n_bullets>, %rdx # load n_bullets
+	movq <%ref bullets>, %rax   # pointer to start of bullets array
 
 	# this is a big brain way of getting a pointer to the end of the array
 
-	leaq (%rdx, %rdx, 4), %rdx # rdx = 5 * n_bullets
-	leaq (%rax, %rdx, 8), %rdx # end = bullets[rdx * 8]
+	leaq (%rdx, %rdx, 4), %rdx  # rdx = 5 * n_bullets
+	leaq (%rax, %rdx, 8), %rdx  # end = bullets[rdx * 8]
 
-	cmpq %rdx, %rax            # search iff iterator < end
+	cmpq %rdx, %rax             # search iff iterator < end
 	jb .L_del_bullet_by_id_search
 	ret
 
 .L_del_bullet_by_id_search_next:
-	addq $40, %rax             # it++
-	cmpq %rdx, %rax            # stop searching iff iterator < end
+	addq $40, %rax              # it++
+	cmpq %rdx, %rax             # stop searching iff iterator < end
 	jnb .L_del_bullet_by_id_stop_search
 
 .L_del_bullet_by_id_search:
-	cmpq %rdi, (%rax)          # if it->id != bullet_id: continue search
+	cmpq %rdi, (%rax)           # if it->id != bullet_id: continue search
 	jne .L_del_bullet_by_id_search_next
-	movb $1, 8(%rax)           # set the destroy_on_next_update flag
+	movb $1, 8(%rax)            # set the destroy_on_next_update flag
 
 .L_del_bullet_by_id_stop_search:
 	ret
@@ -172,10 +166,9 @@ del_bullet_by_id:
 /**
  * Updates the location of bullets.
  */
-.global update_bullets
-update_bullets:
-	movq n_bullets(%rip), %rax # load n_bullets
-        testq %rax, %rax           # if n_bullets == 0: don't do anything
+<%fn update_bullets>
+	movq <%ref n_bullets>, %rax # load n_bullets
+        testq %rax, %rax            # if n_bullets == 0: don't do anything
         je .L_update_bullets_end_ret
 
         pushq %r12
@@ -186,7 +179,7 @@ update_bullets:
         xorl %r12d, %r12d          # new_i = 0
 
 .L_update_bullets_next:
-        movq bullets(%rip), %rdx   # bullet = bullets
+        movq <%ref bullets>, %rdx  # bullet = bullets
 
 	# this is a big brain way of getting a pointer to the next bullet
 
@@ -194,14 +187,14 @@ update_bullets:
         leaq (%rdx, %rax, 8), %rbp # bullet = bullets[rax * 8]
 
         movq %rbp, %rdi         # arg1 = bullet
-        call move_bullet
+        <%call move_bullet>
 
         movss 12(%rbp), %xmm0 # load bullet->x
         pxor %xmm1, %xmm1     # load 0
         comiss %xmm1, %xmm0   # if bullet->x <= 0: continue
         jbe .L_update_bullets_next_continue
 
-        movss .L_MAP_SIZE(%rip), %xmm2
+        movss <%ref .L_MAP_SIZE>, %xmm2
         comiss %xmm0, %xmm2   # if bullet->x > MAP_SIZE: continue
         jbe .L_update_bullets_next_continue
 
@@ -216,24 +209,25 @@ update_bullets:
         je .L_update_bullets_next_include
 
 .L_update_bullets_next_continue:
-        addq    $1, %rbx
-        cmpq    %rbx, n_bullets(%rip)
-        ja      .L_update_bullets_next
+        addq $1, %rbx
+        cmpq %rbx, <%ref n_bullets>
+        ja .L_update_bullets_next
+
 .L_update_bullets_end_loop:
         movslq  %r12d, %rax          # save new_i
 
 .L_update_bullets_end:
-        movq %rax, n_bullets(%rip)   # n_bullets = new_i
+        movq %rax, <%ref n_bullets>  # n_bullets = new_i
 
 	# swap the pointers to the `bullets` and `new_bullets` array.
 	# this is a sneaky way to "move" the new bullets to the current bullets
 	# array without having to actually copy them.
 	# we simply relabel the `new_bullet` array as the new `bullet` array.
 
-        movq bullets(%rip), %rdx     # load pointer to bullets array
-        movq new_bullets(%rip), %rax # load pointer to new bullets array
-        movq %rdx, new_bullets(%rip) # new_bullets = bullets
-        movq %rax, bullets(%rip)     # bullets = new_bullets
+        movq <%ref bullets>, %rdx     # load pointer to bullets array
+        movq <%ref new_bullets>, %rax # load pointer to new bullets array
+        movq %rdx, <%ref new_bullets> # new_bullets = bullets
+        movq %rax, <%ref bullets>     # bullets = new_bullets
 
         popq %rbx
         popq %rbp
@@ -249,13 +243,13 @@ update_bullets:
 	# this is a big brain way of getting a pointer to the next bullet
 
         leaq (%rax, %rax, 4), %rdx   # rax = 5 * new_i
-        movq new_bullets(%rip), %rax
+        movq <%ref new_bullets>, %rax
         leaq (%rax, %rdx, 8), %rsi   # arg2 = new_bullets + rax * 4
-        call copy_bullet
+        <%call copy_bullet>
 
         addq $1, %rbx                # i++
         addl $1, %r12d               # new_i++
 
-        cmpq %rbx, n_bullets(%rip)   # if i < n_bullets: continue loop
+        cmpq %rbx, <%ref n_bullets>  # if i < n_bullets: continue loop
         ja .L_update_bullets_next
         jmp .L_update_bullets_end_loop
