@@ -27,11 +27,13 @@
 	testq %rax, %rax    # if handles == 0: error
 	je .L_SharedPtr_disown_err_zero_handles
 
+	subq $8, %rsp
 	movq %rdi, %r15     # save ptr
 	cmpq $1, %rax       # if handles == 1: free
 	je .L_SharedPtr_disown_free
 
 	subq $1, (%rdi)     # handles > 1: handles--
+	addq $8, %rsp
 	ret
 
 .L_SharedPtr_disown_err_zero_handles_str:
@@ -45,11 +47,11 @@
 
 .L_SharedPtr_disown_free:
 	movq %rdi, %r15     # save ptr
-
 	movq 8(%rdi), %rdi  # arg1 = ptr->handles
 	<%call free>
 
 	movq %r15, %rdi     # arg1 = ptr
+	addq $8, %rsp
 	<%jmp free>
 
 /**
