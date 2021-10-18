@@ -110,11 +110,11 @@
 	# bytes 0-15
 
 	movdqu (%rsi), %xmm0   # load src
-	movups %xmm1, (%rdi)   # store in dst
+	movups %xmm0, (%rdi)   # store in dst
 
 	# bytes 16-31
 
-	movdqu 16(%rsi), %xmm0 # load src + 16
+	movdqu 16(%rsi), %xmm1 # load src + 16
 	movups %xmm1, 16(%rdi) # store in dst + 16
 
 	# bytes 32-40
@@ -238,13 +238,13 @@
 
 .L_update_bullets_next_include:
         movslq %r12d, %rax           # load new_i as 64-bit
-        movq %rbp, %rdi              # arg1 = bullet
 
 	# this is a big brain way of getting a pointer to the next bullet
 
         leaq (%rax, %rax, 4), %rdx   # rax = 5 * new_i
         movq <%ref new_bullets>, %rax
-        leaq (%rax, %rdx, 8), %rsi   # arg2 = new_bullets + rax * 4
+        leaq (%rax, %rdx, 8), %rdi   # arg1 = new_bullets + rax * 4
+        movq %rbp, %rsi              # arg2 = bullet
         <%call copy_bullet>
 
         addq $1, %rbx                # i++
