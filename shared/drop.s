@@ -17,24 +17,17 @@
  * @rcx id The id of drop.
  */
 <%fn add_drop>
-	movq <%ref n_drops>, %rax     # load n_drops
-        movl %edx, %r8d               # save the type
+	movq <%ref n_drops>, %r8      # load n_drops
+	leaq <%ref drops>, %r10       # load pointer to drops array
+        leaq (%r8, %r8, 2), %r9       # rdx = n_drops * 3
 
-        movd %edi, %xmm0              # load x in xmm
-        movd %esi, %xmm1              # load y in xmm
+	movl %edi, (%r10, %r9, 8)     # drop->x = x
+	movl %esi, 4(%r10, %r9, 8)    # drop->y = y
+	movl %edx, 8(%r10, %r9, 8)    # drop->type = type
+	movq %rcx, 16(%r10, %r9, 8)   # drop->id = id
 
-        punpckldq %xmm1, %xmm0        # interleave as [ x, y ] into xmm0
+        addq $1, %r8                  # increment n_drops
+        movq %r8, <%ref n_drops>      # store
 
-        leaq (%rax, %rax, 2), %rdx    # rdx = n_drops * 3
-        salq $3, %rdx                 # rdx *= 8 (now equal to n_drops * 24)
-
-        addq $1, %rax                 # increment n_drops
-        movq %rax, <%ref n_drops>     # store
-
-        movq %xmm0, drops(%rdx)      # store x and y
-        movl %r8d, drops+8(%rdx)     # store type
-        movq %rcx, drops+16(%rdx)    # store id
-
-        leaq (%rax, %rax, 2), %rax     # rax *= 3
-        leaq drops-24(, %rax, 8), %rax # return drops + n_drops + 1
+	leaq (%r10, %r9, 8), %rax     # return drops + n_drops
         ret
