@@ -40,17 +40,8 @@ size_t n_drops = 0;
  * @param type The type of drop.
  * @returns A pointer to the new drop.
  */
-struct Drop *
-add_drop(int x, int y, enum DropType type, uint64_t id)
-{
-	drops[n_drops].x = x;
-	drops[n_drops].y = y;
-	drops[n_drops].type = type;
-	drops[n_drops].id = id;
-	n_drops++;
-
-	return drops + n_drops - 1;
-}
+extern struct Drop *
+add_drop(int x, int y, enum DropType type, uint64_t id);
 
 /**
  * @brief Copies a drop.

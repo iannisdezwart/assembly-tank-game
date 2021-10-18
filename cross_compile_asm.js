@@ -28,6 +28,7 @@ const FILE_LIST = [
 	'shared/shared_ptr.s',
 	'shared/socket_tools.s',
 	'shared/timing.s',
+	'shared/drop.s',
 ]
 
 const processFile = (filename) => {
