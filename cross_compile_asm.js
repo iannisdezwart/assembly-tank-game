@@ -6,6 +6,8 @@ const CALL_STR = '<%call '
 const JMP_STR = '<%jmp '
 const REF_STR = '<%ref '
 const LBL_STR = '<%lbl '
+const IFMACOS_STR = '<%ifmacos '
+const IFLINUX_STR = '<%iflinux '
 
 const MAC_OS_FN_MAP = new Map([
 	[ 'sincos', '__sincos' ]
@@ -147,6 +149,32 @@ const processFile = (filename) => {
 			const labelName = file.substring(i + LBL_STR.length, end)
 
 			out += platformifyLbl(labelName)
+			i = end + 1
+
+			continue
+		}
+
+		if (peek(IFMACOS_STR)) {
+			const end = file.indexOf('>', i + IFMACOS_STR.length)
+			const str = file.substring(i + IFMACOS_STR.length, end)
+
+			if (platform == 'Darwin') {
+				out += str
+			}
+
+			i = end + 1
+
+			continue
+		}
+
+		if (peek(IFLINUX_STR)) {
+			const end = file.indexOf('>', i + IFLINUX_STR.length)
+			const str = file.substring(i + IFLINUX_STR.length, end)
+
+			if (platform == 'Linux') {
+				out += str
+			}
+
 			i = end + 1
 
 			continue

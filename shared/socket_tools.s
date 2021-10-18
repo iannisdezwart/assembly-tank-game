@@ -1,4 +1,4 @@
-.equ FIONBIO, 0x5421
+.equ FIONBIO, <%ifmacos 0x8004667e><%iflinux 0x5421>
 .equ IPPROTO_TCP, 0x6
 .equ TCP_NODELAY, 0x1
 .equ TCP_CORK, 0x3
