@@ -12,7 +12,7 @@ const MAC_OS_FN_MAP = new Map([
 ])
 
 const platformifyFnName = (fnName) => {
-	if (MAC_OS_FN_MAP.has(fnName)) {
+	if (platform == 'Darwin' && MAC_OS_FN_MAP.has(fnName)) {
 		return MAC_OS_FN_MAP.get(fnName)
 	}
 
@@ -83,7 +83,7 @@ const processFile = (filename) => {
 		}
 
 		if (platform == 'Linux') {
-			return `$${ labelName }`
+			return `${ labelName }`
 		}
 
 		throw Error(`Unknown platform "${ platform }"`)
