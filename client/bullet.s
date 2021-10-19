@@ -61,3 +61,48 @@
         popq %r14
         popq %r15
         ret
+
+/**
+ * Messages the server that the client shot a bullet.
+ * @xmm0 x The x coordinate of the starting position of the bullet.
+ * @xmm1 y The y coordinate of the starting position of the bullet.
+ * @xmm2 heading The heading of the bullet.
+ */
+<%fn send_bullet>
+	# char buf[13]  @ 0-12(%rsp)
+	# char *ptr     @ 16-23(%rsp)
+	# float x       @ 24-27(%rsp)
+	# float y       @ 28-31(%rsp)
+	# float heading @ 32-35(%rsp)
+
+	subq $40, %rsp
+	movss %xmm0, 24(%rsp)       # save x
+	movss %xmm1, 28(%rsp)       # save y
+	movss %xmm2, 32(%rsp)       # save heading
+
+	movq %rsp, %r15             # ptr = buf
+
+	movq %r15, 16(%rsp)         # store &ptr
+	leaq 16(%rsp), %rdi         # arg1 = &ptr
+	movb $2, %sil               # arg2 = CMT_SHOOT_BULLET
+	<%call write_u8>
+
+	leaq 16(%rsp), %rdi         # arg1 = &ptr
+	movss 24(%rsp), %xmm0       # arg2 = x
+	<%call write_f32>
+
+	leaq 16(%rsp), %rdi         # arg1 = &ptr
+	movss 28(%rsp), %xmm0       # arg2 = y
+	<%call write_f32>
+
+	leaq 16(%rsp), %rdi         # arg1 = &ptr
+	movss 32(%rsp), %xmm0       # arg2 = heading
+	<%call write_f32>
+
+	movl <%ref socket_fd>, %edi # arg1 = socket_fd
+	leaq 0(%rsp), %rsi          # arg2 = buf
+	movl $13, %edx              # arg3 = sizeof(buf)
+	<%call write_to_socket>
+
+	addq $40, %rsp
+	ret
