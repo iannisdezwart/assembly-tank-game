@@ -5,7 +5,7 @@
 
 .data
 <%glbl n_bullets>
-	.long 0
+	.quad 0
 
 <%glbl bullets_arr>
 	.skip 40960
@@ -220,8 +220,8 @@
         je .L_update_bullets_next_include
 
 .L_update_bullets_next_continue:
-        addq $1, %rbx
-        cmpq %rbx, <%ref n_bullets>
+        addq $1, %rbx                # i++
+        cmpq %rbx, <%ref n_bullets>  # if i < n_bullets: continue loop
         ja .L_update_bullets_next
 
 .L_update_bullets_end_loop:
