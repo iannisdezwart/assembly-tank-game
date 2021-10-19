@@ -1,29 +1,8 @@
 /**
  * @brief Renders all bullets in the current frame.
  */
-void
-render_bullets(void)
-{
-	struct Bullet *bullet;
-	struct Point pos_tr;
-
-	for (size_t i = 0; i < n_bullets; i++)
-	{
-		bullet = bullets + i;
-		pos_tr = translate(bullet->x, bullet->y);
-
-		if (bullet->owner == client_id)
-		{
-			set_colour_rgb(BULLET_COLOUR);
-		}
-		else
-		{
-			set_colour_rgb(BULLET_COLOUR_OPPONENT);
-		}
-
-		fill_circle(pos_tr.x, pos_tr.y, bullet->radius);
-	}
-}
+extern void
+render_bullets(void);
 
 /**
  * @brief Messages the server that the client shot a bullet.

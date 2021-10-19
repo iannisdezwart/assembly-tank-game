@@ -207,8 +207,6 @@ send_player_positions(struct Client *clients, struct Client *client)
 
 	ptr += sizeof(client_t); // Leave room for the number of clients
 
-	printf("\nsending:\n");
-
 	for (client_t i = 0; i < MAX_CLIENTS; i++)
 	{
 		if (Client_is_active(clients + i)
@@ -222,9 +220,6 @@ send_player_positions(struct Client *clients, struct Client *client)
 			write_u16(&ptr, clients[i].player.score);
 			write_u8(&ptr, clients[i].player.username_size);
 			strncpy(ptr, clients[i].player.username,
-				clients[i].player.username_size);
-
-			printf("%s (%hhu)\n", clients[i].player.username,
 				clients[i].player.username_size);
 
 			ptr += clients[i].player.username_size;
