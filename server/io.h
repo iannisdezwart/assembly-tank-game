@@ -22,6 +22,11 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 	float bullet_speed;
 	uint8_t bullet_radius;
 
+	#ifdef DEBUG_IO
+	printf("read %lu bytes from socket\n",
+		read_buf_size);
+	#endif
+
 	while (read_buf_size > 0)
 	{
 		msg_type = read_u8(&read_ptr);

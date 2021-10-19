@@ -189,7 +189,7 @@ handle_events(void)
 	// Shoot
 
 	if (shooting && now() - latest_shoot_time >= BULLET_RELOAD_SPEED
-		/* && player.health > 0 */)
+		&& player.health > 0)
 	{
 		bullet_x = player.x + (TANK_GUN_WIDTH + TANK_BODY_RADIUS
 			+ BULLET_RADIUS_NORMAL) * cos(player.rot);
@@ -204,6 +204,11 @@ handle_events(void)
 
 	read_buf_size = read_from_socket(socket_fd, read_buf, READ_BUF_SIZE);
 	read_ptr = read_buf;
+
+	#ifdef DEBUG_IO
+	printf("read %lu bytes from socket\n",
+		read_buf_size);
+	#endif
 
 	while (read_buf_size > 0)
 	{
@@ -252,17 +257,37 @@ handle_events(void)
 
 				for (player_t i = 0; i < num_clients; i++)
 				{
+					if (read_buf_size < 16)
+					{
+						fprintf(stderr,
+							"Ran out of buffer for SMT_PLAYER_POSITIONS message before end\n");
+						goto next_msg;
+					}
+
 					temp_x = read_f32(&read_ptr);
 					temp_y = read_f32(&read_ptr);
 					temp_rot = read_f32(&read_ptr);
 					temp_health = read_u8(&read_ptr);
 					temp_score = read_u16(&read_ptr);
 					username_size = read_u8(&read_ptr);
+
+					read_buf_size -= 16;
+
+					if (read_buf_size < username_size)
+					{
+						fprintf(stderr,
+							"Ran out of buffer for SMT_PLAYER_POSITIONS message username before end\n");
+						goto next_msg;
+					}
+
 					strncpy(username, read_ptr,
 						username_size);
 
+					username[username_size] = '\0';
+
 					read_ptr += username_size;
-					read_buf_size -= 16 + username_size;
+					read_buf_size -= username_size;
+
 					add_other_player(temp_x, temp_y,
 						temp_rot, temp_health,
 						temp_score, username_size,
@@ -328,17 +353,27 @@ handle_events(void)
 					"{ %lu }\n", size);
 				#endif
 
+				read_buf_size -= 9;
+
 				for (size_t i = 0; i < size; i++)
 				{
+					if (read_buf_size < sizeof(bullet_id_t))
+					{
+						fprintf(stderr,
+							"Ran out of buffer for SMT_DELETED_BULLETS message before end\n");
+						goto next_msg;
+					}
+
 					temp_bullet_id = read_u64(&read_ptr);
 					del_bullet_by_id(temp_bullet_id);
 
 					#ifdef DEBUG_IO
 					printf("\t { %lu }\n", temp_bullet_id);
 					#endif
+
+					read_buf_size -= sizeof(bullet_id_t);
 				}
 
-				read_buf_size -= 9 + size * sizeof(bullet_id_t);
 				break;
 
 			case SMT_DIE:
@@ -351,7 +386,7 @@ handle_events(void)
 				}
 
 				#ifdef DEBUG_IO
-				printf("Received SMT_DIE {}\n", size);
+				printf("Received SMT_DIE {}\n");
 				#endif
 
 				player.health = 0;
@@ -399,6 +434,13 @@ handle_events(void)
 
 				for (uint64_t i = 0; i < drop_n; i++)
 				{
+					if (read_buf_size < 17)
+					{
+						fprintf(stderr,
+							"Ran out of buffer for SMT_SPAWN_DROP message of before end\n");
+						goto next_msg;
+					}
+
 					drop_x = read_u32(&read_ptr);
 					drop_y = read_u32(&read_ptr);
 					drop_type = read_u8(&read_ptr);
