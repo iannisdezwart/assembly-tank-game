@@ -49,12 +49,12 @@ struct Bullet
 extern bool
 Bullet_is_active(struct Bullet *bullet);
 
-struct Bullet bullets_arr[MAX_BULLETS];
+extern struct Bullet bullets_arr[MAX_BULLETS];
 struct Bullet *bullets = bullets_arr;
-struct Bullet new_bullets_arr[MAX_BULLETS];
+extern struct Bullet new_bullets_arr[MAX_BULLETS];
 struct Bullet *new_bullets = new_bullets_arr;
 
-size_t n_bullets = 0;
+extern size_t n_bullets;
 
 /**
  * @brief Moves a bullet forward one tick of time.

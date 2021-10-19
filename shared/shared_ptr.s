@@ -42,7 +42,7 @@
 .L_SharedPtr_disown_err_zero_handles:
 	# this should never happen by the way
 
-	movq .L_SharedPtr_disown_err_zero_handles_str(%rip), %rdi
+	leaq .L_SharedPtr_disown_err_zero_handles_str(%rip), %rdi
 	<%jmp puts>         # return address is already pushed on the stack
 
 .L_SharedPtr_disown_free:

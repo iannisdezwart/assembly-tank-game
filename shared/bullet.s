@@ -3,6 +3,17 @@
 <%lbl .L_MAP_SIZE>
 	.long   1167867904 # 5000.0
 
+.data
+<%glbl n_bullets>
+	.long 0
+
+<%glbl bullets_arr>
+	.skip 40960
+
+<%glbl new_bullets_arr>
+	.skip 40960
+
+.text
 /**
  * struct Bullet:
  * A structure for a bullet.
@@ -83,7 +94,7 @@
 	leaq (%rax, %rax, 4), %rcx  # rcx = 5 * n_bullets
 	leaq (%r15, %rcx, 8), %r15  # bullet = bullets[rcx * 8]
 
-	movq  %rdi, (%r15)          # bullet->id = id
+	movq %rdi, (%r15)           # bullet->id = id
 	movb $0, 8(%r15)            # bullet->destroy_on_next_update = false
 
 	# this is a big brain way of collecting the x, y, heading and speed
