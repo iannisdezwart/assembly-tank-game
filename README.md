@@ -1,11 +1,14 @@
 # Assembly Tank Game
 
-Online multiplayer tank game written in Assembly
+Online multiplayer tank game written in Assembly.
+Compatible for x86 Linux and x86 MacOS.
 
 ## Installation
 
-You need to have some SDL2 development libraries and Node JS installed on
-your device.
+You need to install some SDL2 development libraries to compile the game.
+The cross-compile preprocessor requires NodeJS to be installed on the system.
+You can install all dependencies with the following command on a debian-based
+machine:
 On a debian-based machine these can be installed with:
 
 ```sh

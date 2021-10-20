@@ -32,6 +32,7 @@ const FILE_LIST = [
 	'shared/drop.s',
 	'client/assets.s',
 	'client/bullet.s',
+	'client/drop.s',
 ]
 
 const processFile = (filename) => {
