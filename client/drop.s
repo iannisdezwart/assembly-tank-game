@@ -1,3 +1,11 @@
+.data
+<%glbl n_powerups>
+	.quad 0
+
+<%glbl powerups>
+	.skip 64
+
+.text
 /**
  * Renders all drops.
  */
