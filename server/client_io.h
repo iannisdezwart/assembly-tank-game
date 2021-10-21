@@ -24,6 +24,10 @@ kill_client(struct Client *client)
 	write_u8(&ptr, SMT_DIE);
 	message_client(client, buf, buf_size);
 
+	#ifdef DEBUG_IO
+	printf("Sent SMT_DIE to %d {}\n", client->fd);
+	#endif
+
 	client->player.health = 0;
 	client->kill_time = now();
 }
@@ -89,6 +93,11 @@ respawn_client(struct Client *client)
 	client->player.score /= 2;
 
 	message_client(client, buf, buf_size);
+
+	#ifdef DEBUG_IO
+	printf("Sent SMT_RESPAWN to %d { %.1f, %.1f }\n",
+		client->fd, respawn_x, respawn_y);
+	#endif
 }
 
 /**
@@ -170,16 +179,28 @@ send_deleted_bullets(struct Client *clients)
 	char *buf = malloc(buf_size);
 	char *ptr = buf;
 
+	#ifdef DEBUG_IO
+	printf("Broadcast SMT_DELETED_BULLETS { %lu, { ", size);
+	#endif
+
 	write_u8(&ptr, SMT_DELETED_BULLETS);
 	write_u64(&ptr, size);
 
 	for (bullet_id_t *it = deleted_bullets; it < deleted_bullets_ptr; it++)
 	{
 		write_u64(&ptr, *it);
+
+		#ifdef DEBUG_IO
+		printf("%lu, ", *it);
+		#endif
 	}
 
 	broadcast(clients, buf, buf_size);
 	reset_deleted_bullets();
+
+	#ifdef DEBUG_IO
+	printf("} }\n");
+	#endif
 }
 
 /**
@@ -200,6 +221,10 @@ send_player_positions(struct Client *clients, struct Client *client)
 	char *ptr = buf;
 
 	client_t num_clients = 0;
+
+	#ifdef DEBUG_IO
+	printf("Broadcast SMT_PLAYER_POSITIONS { %hu, { ", num_clients);
+	#endif
 
 	write_u8(&ptr, SMT_PLAYER_POSITIONS);
 	write_u8(&ptr, client->player.health);
@@ -226,6 +251,15 @@ send_player_positions(struct Client *clients, struct Client *client)
 
 			buf_size += 16 + clients[i].player.username_size;
 			num_clients++;
+
+			#ifdef DEBUG_IO
+			printf("{ %.1f, %.1f, %.1f, %hhu, %hu, %hhu, %s }, ",
+				clients[i].player.x, clients[i].player.y,
+				clients[i].player.rot, clients[i].player.health,
+				clients[i].player.score,
+				clients[i].player.username_size,
+				clients[i].player.username);
+			#endif
 		}
 	}
 
@@ -236,4 +270,8 @@ send_player_positions(struct Client *clients, struct Client *client)
 	// Send the message
 
 	message_client(client, buf, buf_size);
+
+	#ifdef DEBUG_IO
+	printf("} }\n");
+	#endif
 }

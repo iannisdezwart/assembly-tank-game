@@ -57,6 +57,8 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 
 				#ifdef DEBUG_IO
 				printf("Received CMT_HANDSHAKE\n");
+				printf("Sent SMT_HANDSHAKE to %d { %d }\n",
+					client->fd, client->fd);
 				#endif
 
 				respawn_client(client);
@@ -168,6 +170,14 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				write_u32(&write_ptr, client->fd); // Owner
 
 				broadcast(clients, write_buf, 30);
+
+				#ifdef DEBUG_IO
+				printf("Broadcast SMT_SPAWN_BULLET { %lu, "
+					"%.1f, %.1f, %.1f, %hhu, %.1f "
+					"%u }\n", bullet_id, bullet_x,
+					bullet_y, bullet_heading, bullet_radius,
+					bullet_speed, client->fd);
+				#endif
 
 				break;
 

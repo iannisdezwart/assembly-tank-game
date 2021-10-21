@@ -13,7 +13,7 @@
 #include <string.h>
 #include <errno.h>
 
-// #define DEBUG_IO
+#define DEBUG_IO
 
 #define PORT 4242
 

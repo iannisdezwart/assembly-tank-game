@@ -20,7 +20,7 @@
 	leaq <%ref drops>, %rbx        # load a pointer to the drops array
 
 .L_render_drops_switch:
-	movl 8(%rbx), %edx             # switch (drop->type)
+	movzbl 8(%rbx), %edx           # switch (drop->type)
 	cmpq $3, %rdx                  # jump to default case
 	ja .L_render_drops_switch_default
 
@@ -65,7 +65,8 @@
 	jmp .L_render_drops_return
 
 .L_render_drops_switch_default:
-	movl <%ref .L_render_drops_unknown_drop_str>, %edi
+	leaq .L_render_drops_unknown_drop_str(%rip), %rdi
+	movl %edx, %esi
 	xorl %eax, %eax
 	<%call printf>
 	jmp .L_render_drops_loop_check
@@ -83,7 +84,7 @@
 	.quad .L_render_drops_switch_case_super_speed
 
 .L_render_drops_unknown_drop_str:
-.asciz	  "Unknown drop of type %u\n"
+	.string "Unknown drop of type %u\n"
 
 /**
  * Removes a powerup from the powerups array.

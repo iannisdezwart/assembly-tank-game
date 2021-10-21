@@ -1,33 +1,74 @@
 #define READ_BUF_SIZE 4096
 #define CAP_FPS_TO_REFRESH_RATE
 
-int raw_mouse_x;
-int raw_mouse_y;
+extern int raw_mouse_x;
+extern int raw_mouse_y;
 
 /**
  * @brief Initialises some variables used in the `handle_events()` function.
  */
-void
-setup_io(void)
+extern void
+setup_io(void);
+
+char
+debug1(char c)
 {
-	player.x = MAP_WIDTH / 2;
-	player.y = MAP_HEIGHT / 2;
-	player.rot = 0;
-	player.health = 0;
-	player.username_size = strnlen(username, TANK_USERNAME_MAX_SIZE);
-	strncpy(player.username, username, TANK_USERNAME_MAX_SIZE);
+	printf("received message of type %hhu\n", c);
 
-	raw_mouse_y = MAP_HEIGHT / 2;
-	raw_mouse_x = INT32_MAX;
+	return c;
+}
 
-	init_timings();
+void
+debug2(char *read_ptr, size_t read_buf_size)
+{
+	printf("reading %lu bytes from socket\n", read_buf_size);
+
+	for (size_t i = 0; i < read_buf_size; i += 16)
+	{
+		printf("%04lx    ", i);
+
+		for (size_t j = 0; j < 16 && read_buf_size - i > j; j++)
+		{
+			printf("%02hhx ", read_ptr[i + j]);
+		}
+
+		printf("\n");
+	}
+}
+
+void
+debug3(void)
+{
+	for (size_t i = 0; i < n_drops; i++)
+	{
+		printf("Drop: { %u, %u, %hhu, %lu }\n",
+			drops[i].x, drops[i].y, drops[i].type, drops[i].id);
+	}
+}
+
+int
+debug4(int scancode)
+{
+	printf("scancode %d\n", scancode);
+	return scancode;
+}
+
+int
+debug5(int e_type)
+{
+	if (e_type > 1)
+	{
+		printf("event of type %u\n", e_type);
+	}
+
+	return e_type;
 }
 
 /**
  * @brief Handles all mouse and keyboard IO events.
  */
-void
-handle_events(void)
+extern void
+handle_events(void); /*
 {
 	SDL_Event e;
 
@@ -532,3 +573,4 @@ handle_events(void)
 
 	quit:;
 }
+*/

@@ -178,6 +178,11 @@ gen_drop(struct Client *clients)
 	write_u64(&ptr, drop->id);
 
 	broadcast(clients, buf, buf_size);
+
+	#ifdef DEBUG_IO
+	printf("Broadcast SMT_SPAWN_DROP { 1, %u, %u, %hhu, %lu }\n",
+		x, y, type, drop->id);
+	#endif
 }
 
 /**
@@ -195,6 +200,10 @@ send_all_drops(struct Client *client)
 	write_u8(&ptr, SMT_SPAWN_DROP);
 	write_u64(&ptr, n_drops);
 
+	#ifdef DEBUG_IO
+	printf("Sent SMT_SPAWN_DROP to %d { %lu, { ", client->fd, n_drops);
+	#endif
+
 	while (drop < drops + n_drops)
 	{
 		write_u32(&ptr, drop->x);
@@ -203,9 +212,18 @@ send_all_drops(struct Client *client)
 		write_u64(&ptr, drop->id);
 
 		drop++;
+
+		#ifdef DEBUG_IO
+		printf("{ %u, %u, %hhu, %lu }, ",
+			drop->x, drop->y, drop->type, drop->id);
+		#endif
 	}
 
 	message_client(client, buf, buf_size);
+
+	#ifdef DEBUG_IO
+	printf("} }\n");
+	#endif
 }
 
 /**
@@ -260,6 +278,11 @@ send_powerup(struct Client *client, struct Drop *drop)
 			add_client_powerup(client, drop->type);
 			message_client(client, buf, buf_size);
 
+			#ifdef DEBUG_IO
+			printf("Sent SMT_POWERUP to %d { %hhu }\n",
+				client->fd, drop->type);
+			#endif
+
 			break;
 	}
 }
@@ -282,6 +305,10 @@ send_del_drop(struct Client *clients, struct Drop *drop)
 
 	broadcast(clients, buf, buf_size);
 	del_drop(drop);
+
+	#ifdef DEBUG_IO
+	printf("Broadcast SMT_DESPAWN_DROP { %lu }\n", drop->id);
+	#endif
 }
 
 /**

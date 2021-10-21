@@ -11,7 +11,8 @@ const IFMACOS_STR = '<%ifmacos '
 const IFLINUX_STR = '<%iflinux '
 
 const MAC_OS_FN_MAP = new Map([
-	[ 'sincos', '__sincos' ]
+	[ 'sincos', '__sincos' ],
+	[ 'sincosf', '__sincosf' ],
 ])
 
 const platformifyFnName = (fnName) => {
@@ -34,6 +35,7 @@ const FILE_LIST = [
 	'client/bullet.s',
 	'client/drop.s',
 	'client/health_bar.s',
+	'client/io.s',
 ]
 
 const processFile = (filename) => {
