@@ -33,6 +33,7 @@ const FILE_LIST = [
 	'client/assets.s',
 	'client/bullet.s',
 	'client/drop.s',
+	'client/health_bar.s',
 ]
 
 const processFile = (filename) => {
