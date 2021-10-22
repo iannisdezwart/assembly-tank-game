@@ -64,6 +64,18 @@ debug5(int e_type)
 	return e_type;
 }
 
+void
+debug6(void)
+{
+	printf("(%d powerups)\n", n_powerups);
+
+	for (size_t i = 0; i < n_powerups; i++)
+	{
+		printf("Powerup: { %d, %lu }\n",
+			powerups[i].type, powerups[i].time_activated);
+	}
+}
+
 /**
  * @brief Handles all mouse and keyboard IO events.
  */

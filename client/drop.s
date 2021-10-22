@@ -25,7 +25,10 @@
 	ja .L_render_drops_switch_default
 
 	movq <%ref drop_heal_pack>, %rax
-	jmp *.L_render_drops_switch_jump_table(, %rdx, 8)
+	leaq .L_render_drops_switch_jump_table(%rip), %rcx
+	movq (%rcx, %rdx, 8), %rdx
+	addq %rcx, %rdx
+	jmp *%rdx
 
 .L_render_drops_switch_case_fast_shooting:
 	movq <%ref drop_fast_shooting>, %rax
@@ -59,7 +62,8 @@
 	addq $24, %rbx                 # drop++
 	movq <%ref n_drops>, %rax      # load n_drops
 	leaq (%rax, %rax, 2), %rax     # n_drops *= 8
-	leaq <%ifmacos _>drops(, %rax, 8), %rax
+	leaq <%ref drops>, %rcx
+	leaq (%rcx, %rax, 8), %rax
 	cmpq %rax, %rbx                # if drop == drops_end: stop
 	jb .L_render_drops_switch
 	jmp .L_render_drops_return
@@ -78,10 +82,10 @@
 	ret
 
 .L_render_drops_switch_jump_table:
-	.quad .L_render_drops_render
-	.quad .L_render_drops_switch_case_fast_shooting
-	.quad .L_render_drops_switch_case_big_bullets
-	.quad .L_render_drops_switch_case_super_speed
+	.quad .L_render_drops_render - .L_render_drops_switch_jump_table
+	.quad .L_render_drops_switch_case_fast_shooting - .L_render_drops_switch_jump_table
+	.quad .L_render_drops_switch_case_big_bullets - .L_render_drops_switch_jump_table
+	.quad .L_render_drops_switch_case_super_speed - .L_render_drops_switch_jump_table
 
 .L_render_drops_unknown_drop_str:
 	.string "Unknown drop of type %u\n"
@@ -99,10 +103,11 @@ del_powerup:
 .L_del_powerup_no_super_speed:
 	movq <%ref n_powerups>, %rax          # load n_powerups
 	subq $1, %rax                         # n_powerups--
-	movq %rax, n_powerups(%rip)           # store n_powerups
+	movq %rax, <%ref n_powerups>          # store n_powerups
 	shlq $4, %rax                         # n_powerups *= 16
 					      # arg1 = powerup (already in %rdi)
-	leaq <%ifmacos _>powerups(%rax), %rsi # arg2 = powerups + n_powerups
+	leaq <%ref powerups>, %rcx
+	leaq (%rcx, %rax), %rsi               # arg2 = powerups + n_powerups
 	<%jmp copy_powerup>
 
 /**
@@ -132,13 +137,15 @@ del_powerup:
 
 .L_activate_powerup_skip_find_loop:
 	shlq $4, %rax                  # n_powerups *= 16
-	movl %ebp, <%ifmacos _>powerups(%rax) # powerups[n_powerups].type = drop_type
+	leaq <%ref powerups>, %rcx
+	movl %ebp, (%rcx, %rax)        # powerups[n_powerups].type = drop_type
 
 	<%call now>
 	movq <%ref n_powerups>, %rcx   # load n_powerups
 	movq %rcx, %rdx                # copy n_powerups
 	shlq $4, %rdx                  # n_powerups *= 16
-	movq %rax, <%ifmacos _>powerups+8(%rdx) # powerup->time_activated = now()
+	leaq <%ref powerups>, %rcx
+	movq %rax, 8(%rcx, %rdx)       # powerup->time_activated = now()
 
 	addq $1, %rcx                  # n_powerups++
 	movq %rcx, <%ref n_powerups>   # save n_powerups
@@ -337,6 +344,7 @@ del_powerup:
 	pushq %rbx
 	pushq %rax
 
+	<%call debug6>
 	<%call now>                    # time = now()
 	cmpq $0, <%ref n_powerups>     # if n_powerups == 0: return
 	je .L_update_powerups_ret
@@ -357,7 +365,8 @@ del_powerup:
 .L_update_powerups_loop:
 	movq %rbx, %rax                # save i
 	shlq $4, %rax                  # i *= 16
-	leaq <%ifmacos _>powerups(%rax), %rdi # powerup = powerups[i]
+	leaq <%ref powerups>, %rcx
+	leaq (%rcx, %rax), %rdi        # powerup = powerups[i]
 	movq %r14, %rcx                # save time
 
 	leaq 8(%rdi), %r8              # load powerup->time_activated

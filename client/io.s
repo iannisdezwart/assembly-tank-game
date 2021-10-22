@@ -311,11 +311,11 @@
 	<%call sincosf>
 
 	movss 56(%rsp), %xmm1          # load sin into xmm1
-	mulss .L_float_48, %xmm1       # sin *= widths + radii
+	mulss .L_float_48(%rip), %xmm1 # sin *= widths + radii
 	addss 4(%rbx), %xmm1           # sin += player.y
 
 	movss 60(%rsp), %xmm0          # load cos into xmm0
-	mulss .L_float_48, %xmm0       # cos *= widths + radii
+	mulss .L_float_48(%rip), %xmm0 # cos *= widths + radii
 	addss (%rbx), %xmm0            # cos += player.x
 
 	                               # arg1 = bullet_x (already in xmm0)
@@ -670,7 +670,7 @@
 
 .L_handle_events_smt_powerup:
 	cmpq $2, %r12                  # if read_buf_size >= 2: skip error
-	je .L_handle_events_smt_powerup_no_err
+	jge .L_handle_events_smt_powerup_no_err
 
 	leaq .L_handle_events_smt_powerup_err_str(%rip), %rdi
 	movq %r12, %rsi
