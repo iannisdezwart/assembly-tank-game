@@ -111,7 +111,7 @@
  */
 <%fn drops_full>
 	cmpq $MAX_DROPS, <%ref n_drops>
-	sete %al
+	setge %al
 	ret
 
 .equ Powerup_SIZE, 16

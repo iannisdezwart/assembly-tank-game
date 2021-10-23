@@ -638,7 +638,7 @@
 	movl %eax, %esi                # save drop_y
 
 	<%call read_u8>
-	movb %al, %dl                  # save drop_type
+	movzbl %al, %edx               # save drop_type
 
 	<%call read_u64>
 	movq %rax, %rcx                # save drop_id
@@ -681,11 +681,11 @@
 	movq %r13, %rdi                # arg1 = &read_ptr
 	<%call read_u8>
 
-	movb %al, %dil                 # arg1 = drop_type
+	movzbl %al, %edi               # arg1 = drop_type
 	<%call activate_powerup>
 
 	subq $2, %r12                  # read_buf_size -= 2
-	jmp .L_handle_events_schedule_next_frame
+	jmp .L_handle_events_read_socket_loop_check
 
 .L_handle_events_smt_unknown:
 	leaq .L_handle_events_smt_unknown_err_str(%rip), %rdi
