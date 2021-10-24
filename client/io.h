@@ -67,7 +67,7 @@ debug5(int e_type)
 void
 debug6(void)
 {
-	printf("(%d powerups)\n", n_powerups);
+	printf("(%lu powerups)\n", n_powerups);
 
 	for (size_t i = 0; i < n_powerups; i++)
 	{

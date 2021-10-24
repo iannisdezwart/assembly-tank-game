@@ -144,8 +144,8 @@ del_powerup:
 	movq <%ref n_powerups>, %rcx   # load n_powerups
 	movq %rcx, %rdx                # copy n_powerups
 	shlq $4, %rdx                  # n_powerups *= 16
-	leaq <%ref powerups>, %rcx
-	movq %rax, 8(%rcx, %rdx)       # powerup->time_activated = now()
+	leaq <%ref powerups>, %r8
+	movq %rax, 8(%r8, %rdx)        # powerup->time_activated = now()
 
 	addq $1, %rcx                  # n_powerups++
 	movq %rcx, <%ref n_powerups>   # save n_powerups

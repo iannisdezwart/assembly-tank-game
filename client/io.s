@@ -418,6 +418,8 @@
 	<%call read_u8>
 	movb %al, %r14b                # save num_clients
 
+	<%call delete_other_players>
+
 	subq $5, %r12                  # read_buf_size -= 5
 
 .L_handle_events_smt_player_positions_no_err_loop_check:
@@ -476,7 +478,7 @@
 	movl $0, 4188(%rsp, %rdx)      # username[username_size] = '\0'
 
 	addq %rdx, 4160(%rsp)          # read_ptr += username_size
-	subl $16, %edx                 # read_buf_size -= username_size
+	subq %rdx, %r12                # read_buf_size -= username_size
 
 	movss 4172(%rsp), %xmm0        # arg1 = temp_x
 	movss 4176(%rsp), %xmm1        # arg2 = temp_y

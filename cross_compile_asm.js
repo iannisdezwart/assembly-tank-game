@@ -36,6 +36,7 @@ const FILE_LIST = [
 	'client/drop.s',
 	'client/health_bar.s',
 	'client/io.s',
+	'client/leaderboard.s',
 ]
 
 const processFile = (filename) => {
