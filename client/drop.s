@@ -47,7 +47,7 @@
 	xorps %xmm0, %xmm0
 	cvtsi2ssl (%rbx), %xmm0        # load drop->x
 	xorps %xmm1, %xmm1
-	cvtsi2ssl 4(%rbx), %xmm1       # load drop ->y
+	cvtsi2ssl 4(%rbx), %xmm1       # load drop->y
 	<%call translate>
 
 	movq %r14, %rdi                # arg1 = img
