@@ -44,11 +44,19 @@ main(int argc, char **argv)
 {
 	if (argc < 2)
 	{
+		printf("usage: %s <server ip> [username]", argv[0]);
+		exit(1);
+	}
+
+	server_ip = argv[1];
+
+	if (argc < 3)
+	{
 		username = "Unnamed Tank";
 	}
 	else
 	{
-		username = argv[1];
+		username = argv[2];
 	}
 
 	// Setup

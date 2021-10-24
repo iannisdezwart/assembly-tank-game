@@ -13,6 +13,7 @@ const IFLINUX_STR = '<%iflinux '
 const MAC_OS_FN_MAP = new Map([
 	[ 'sincos', '__sincos' ],
 	[ 'sincosf', '__sincosf' ],
+	[ '__errno_location', '__error' ],
 ])
 
 const platformifyFnName = (fnName) => {
@@ -38,6 +39,7 @@ const FILE_LIST = [
 	'client/io.s',
 	'client/leaderboard.s',
 	'client/map.s',
+	'client/network.s',
 ]
 
 const processFile = (filename) => {

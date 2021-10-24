@@ -28,7 +28,7 @@
  * Renders the map grid.
  */
 <%fn render_map_grid>
-	subq $8, %rsp
+	pushq %rbx
 
 	movb $192, %dil      # set colour to rgb(192, 192, 192)
 	movb %dil, %sil
@@ -81,5 +81,5 @@
 
 .L_render_map_grid_ret:
 
-	addq $8, %rsp
+	popq %rbx
 	ret
