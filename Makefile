@@ -5,7 +5,8 @@ SHARED_ASM_FILES = shared/buffer.pp.s shared/socket_tools.pp.s \
 	shared/bullet.pp.s shared/drop.pp.s
 CLIENT_ASM_FILES = client/assets.pp.s client/bullet.pp.s client/drop.pp.s \
 	client/health_bar.pp.s client/io.pp.s client/leaderboard.pp.s \
-	client/map.pp.s client/network.pp.s client/render.pp.s
+	client/map.pp.s client/network.pp.s client/render.pp.s \
+	client/tank.pp.s
 
 all: tank_game_client tank_game_server
 

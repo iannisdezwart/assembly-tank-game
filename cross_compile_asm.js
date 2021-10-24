@@ -41,6 +41,7 @@ const FILE_LIST = [
 	'client/map.s',
 	'client/network.s',
 	'client/render.s',
+	'client/tank.s',
 ]
 
 const processFile = (filename) => {

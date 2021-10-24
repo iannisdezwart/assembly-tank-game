@@ -21,7 +21,7 @@
 	<%call __errno_location>
 
 	addq $8, %rsp        # prepare to tailcall
-	movq %rax, %rdi      # arg1 = errno location
+	movq (%rax), %rdi    # arg1 = errno location
 	<%jmp strerror>      # tailcall
 
 /**
@@ -140,11 +140,11 @@
 	subq $8, %rsp
 
 	<%call read>          # all arguments are already in their registers
-	cmpq $0, %rax         # if result < 0: maybe error
+	cmpl $0, %eax         # if result < 0: maybe error
 	jge .L_read_from_socket_ret
 
 	<%call __errno_location>
-	cmpq <%ifmacos $35><%iflinux $11>, %rax # if errno == EAGAIN: err
+	cmpq <%ifmacos $35><%iflinux $11>, (%rax) # if errno == EAGAIN: err
 	je .L_read_from_socket_eagain
 
 	leaq .L_read_from_socket_err_str(%rip), %rdi

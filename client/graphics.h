@@ -148,7 +148,7 @@ rotate_point_around_point(int x, int y, float angle,
  * @param y_origin The y coordinate of the origin to rotate from.
  */
 void
-filled_rotated_rect(int x, int y, uint32_t width, uint32_t height,
+fill_rotated_rect(int x, int y, uint32_t width, uint32_t height,
 	float angle, int x_origin, int y_origin)
 {
 	struct Point rotated_point;
