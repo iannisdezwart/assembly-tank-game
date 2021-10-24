@@ -40,6 +40,7 @@ const FILE_LIST = [
 	'client/leaderboard.s',
 	'client/map.s',
 	'client/network.s',
+	'client/render.s',
 ]
 
 const processFile = (filename) => {
