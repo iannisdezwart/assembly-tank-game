@@ -95,97 +95,25 @@ fill_rotated_rect(int x, int y, uint32_t width, uint32_t height,
 	float angle, int x_origin, int y_origin);
 
 /**
- * @brief Draws a stroked circle.
- * @param x_centre The x coordinate of the centre of the circle.
- * @param y_centre The y coordinate of the centre of the circle.
- * @param radius The radius the circle.
- */
-void
-stroke_circle(int x_centre, int y_centre, uint32_t radius)
-{
-	const uint32_t diameter = radius * 2;
-
-	int x = radius - 1;
-	int y = 0;
-	int32_t tx = 1;
-	int32_t ty = 1;
-	int32_t err = tx - diameter;
-
-	while (x >= y)
-	{
-		// Draw the octants of the circle
-
-		SDL_RenderDrawPoint(renderer, x_centre + x, y_centre + y);
-		SDL_RenderDrawPoint(renderer, x_centre + x, y_centre - y);
-		SDL_RenderDrawPoint(renderer, x_centre - x, y_centre + y);
-		SDL_RenderDrawPoint(renderer, x_centre - x, y_centre - y);
-		SDL_RenderDrawPoint(renderer, x_centre + y, y_centre + x);
-		SDL_RenderDrawPoint(renderer, x_centre + y, y_centre - x);
-		SDL_RenderDrawPoint(renderer, x_centre - y, y_centre + x);
-		SDL_RenderDrawPoint(renderer, x_centre - y, y_centre - x);
-
-		if (err <= 0)
-		{
-			y++;
-			err += ty;
-			ty += 2;
-		}
-		else
-		{
-			x--;
-			tx += 2;
-			err += tx - diameter;
-		}
-	}
-}
-
-/**
  * @brief Draws a filled circle.
  * @param x_centre The x coordinate of the centre of the circle.
  * @param y_centre The y coordinate of the centre of the circle.
  * @param radius The radius the circle.
  */
-void
-fill_circle(int x_centre, int y_centre, uint32_t radius)
-{
-	const int diameter = radius * 2;
-	const int radius_squared = radius * radius;
-
-	for (int i = 0; i < diameter; i++)
-	{
-		for (int j = 0; j < diameter; j++)
-		{
-			int x = radius - i;
-			int y = radius - j;
-
-			if (x * x + y * y <= radius_squared)
-			{
-				SDL_RenderDrawPoint(renderer, x_centre + x, y_centre + y);
-			}
-		}
-	}
-}
+extern void
+fill_circle(int x_centre, int y_centre, uint32_t radius);
 
 /**
  * @brief Render an SDL_Surface onto the frame.
+ * @param surface A pointer to the surface to render.
+ * @param x The x coordinate of where to render the surface.
+ * @param y The y coordinate of where to render the surface.
+ * @param width The width of the surface.
+ * @param height The height of the surface.
  */
-void
+extern void
 render_surface(struct SDL_Surface *surface, int x, int y,
-	uint32_t width, uint32_t height)
-{
-	SDL_Texture *texture;
-	SDL_Rect texture_rect;
-
-	texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-	texture_rect.x = x;
-	texture_rect.y = y;
-	texture_rect.w = width;
-	texture_rect.h = height;
-
-	SDL_RenderCopy(renderer, texture, NULL, &texture_rect);
-	SDL_DestroyTexture(texture);
-}
+	uint32_t width, uint32_t height);
 
 /**
  * @brief Renders text onto the frame in a left align.
@@ -228,32 +156,8 @@ render_text(Font *font, const char *text, int x, int y)
  * @param x The x coordinate of the middle location to render to.
  * @param y The y coordinate of the location to render to.
  */
-void
-render_text_centred(Font *font, const char *text, int x, int y)
-{
-	SDL_Color colour;
-	SDL_Surface *text_surface;
-	SDL_Texture *text_texture;
-	SDL_Rect text_texture_rect;
-
-	int text_width;
-	int text_height;
-
-	SDL_GetRenderDrawColor(renderer, &colour.r, &colour.g, &colour.b, &colour.a);
-	TTF_SizeText(font, text, &text_width, &text_height);
-
-	text_surface = TTF_RenderText_Blended(font, text, colour);
-	text_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
-	text_texture_rect.x = x - text_width / 2;
-	text_texture_rect.y = y;
-	text_texture_rect.w = text_width;
-	text_texture_rect.h = text_height;
-
-	SDL_RenderCopy(renderer, text_texture, NULL, &text_texture_rect);
-
-	SDL_FreeSurface(text_surface);
-	SDL_DestroyTexture(text_texture);
-}
+extern void
+render_text_centred(Font *font, const char *text, int x, int y);
 
 /**
  * @brief Renders text onto the frame in a right align.
