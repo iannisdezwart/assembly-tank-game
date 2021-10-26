@@ -92,7 +92,7 @@
 
 .L_render_leaderboard_render_leaderboard_loop:
 	movq %rsp, %rdi                # arg1 = leaderboard_line
-	leaq <%ref .L_render_leaderboard_fmt_str>, %rsi # arg2 = fmt_str
+	leaq .L_render_leaderboard_fmt_str(%rip), %rsi # arg2 = fmt_str
 	movq %r12, %rdx                # arg3 = leaderboard[i].username
 	movzwl 16(%r12), %ecx          # arg4 = leaderboard[i].score
 	xorl %eax, %eax                # don't make sprintf curse on us
