@@ -1,11 +1,8 @@
 /**
  * @brief Renders the renderer to the frame.
  */
-void
-render_frame(void)
-{
-	SDL_RenderPresent(renderer);
-}
+extern void
+render_frame(void);
 
 /**
  * @brief Sets the drawing colour to an rgb value.
@@ -14,11 +11,8 @@ render_frame(void)
  * @param g 8-bit green value.
  * @param b 8-bit blue value.
  */
-void
-set_colour_rgb(uint8_t r, uint8_t g, uint8_t b)
-{
-	SDL_SetRenderDrawColor(renderer, r, g, b, 0xFF);
-}
+extern void
+set_colour_rgb(uint8_t r, uint8_t g, uint8_t b);
 
 /**
  * @brief Sets the drawing colour to an rgba value.
@@ -27,11 +21,8 @@ set_colour_rgb(uint8_t r, uint8_t g, uint8_t b)
  * @param b 8-bit blue value.
  * @param a 8-bit alpha value.
  */
-void
-set_colour_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
-{
-	SDL_SetRenderDrawColor(renderer, r, g, b, a);
-}
+extern void
+set_colour_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
 /**
  * @brief Draws a filled rectangle.
@@ -40,18 +31,8 @@ set_colour_rgba(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
  * @param width The width of the rectangle.
  * @param height The height of the rectangle.
  */
-void
-fill_rect(int x, int y, uint32_t width, uint32_t height)
-{
-	SDL_Rect rect;
-
-	rect.x = x;
-	rect.y = y;
-	rect.w = width;
-	rect.h = height;
-
-	SDL_RenderFillRect(renderer, &rect);
-}
+extern void
+fill_rect(int x, int y, uint32_t width, uint32_t height);
 
 /**
  * @brief Draws a stroked rectangle.
@@ -61,32 +42,8 @@ fill_rect(int x, int y, uint32_t width, uint32_t height)
  * @param height The height of the rectangle.
  * @param thickness The line tickness of the rectangle.
  */
-void
-stroke_rect(int x, int y, uint32_t width, uint32_t height, uint32_t thickness)
-{
-	uint32_t offset = thickness / 2;
-
-	int x_left = x - offset;
-
-	int y_top = y - offset;
-	int y_bottom = y + offset;
-
-	// Top line
-
-	fill_rect(x_left, y_top, width + thickness, thickness);
-
-	// Bottom line
-
-	fill_rect(x_left, y_top + height, width + thickness, thickness);
-
-	// Left line
-
-	fill_rect(x_left, y_bottom, thickness, height - thickness);
-
-	// Right line
-
-	fill_rect(x_left + width, y_bottom, thickness, height - thickness);
-}
+extern void
+stroke_rect(int x, int y, uint32_t width, uint32_t height, uint32_t thickness);
 
 struct Point
 {
@@ -116,23 +73,9 @@ untranslate(int x, int y);
  * @returns A point structure that contains the x and y value of the
  * rotated point.
  */
-struct Point
+extern struct Point
 rotate_point_around_point(int x, int y, float angle,
-	int x_origin, int y_origin)
-{
-	struct Point point;
-
-	float s = sin(angle);
-	float c = cos(angle);
-
-	float dx = x - x_origin;
-	float dy = y - y_origin;
-
-	point.x = dx * c - dy * s + x_origin;
-	point.y = dx * s + dy * c + y_origin;
-
-	return point;
-}
+	int x_origin, int y_origin);
 
 /**
  * @brief Draws a filled rotated rectangle.
@@ -147,23 +90,9 @@ rotate_point_around_point(int x, int y, float angle,
  * @param x_origin The x coordinate of the origin to rotate from.
  * @param y_origin The y coordinate of the origin to rotate from.
  */
-void
+extern void
 fill_rotated_rect(int x, int y, uint32_t width, uint32_t height,
-	float angle, int x_origin, int y_origin)
-{
-	struct Point rotated_point;
-
-	for (int i = x; i < x + width; i++)
-	{
-		for (int j = y; j < y + height; j++)
-		{
-			rotated_point = rotate_point_around_point(i, j, angle,
-				x_origin, y_origin);
-
-			SDL_RenderDrawPoint(renderer, rotated_point.x, rotated_point.y);
-		}
-	}
-}
+	float angle, int x_origin, int y_origin);
 
 /**
  * @brief Draws a stroked circle.
