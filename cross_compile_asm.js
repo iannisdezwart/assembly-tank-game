@@ -44,6 +44,7 @@ const FILE_LIST = [
 	'client/tank.s',
 	'client/timing.s',
 	'client/graphics.s',
+	'client/player.s',
 ]
 
 const processFile = (filename) => {

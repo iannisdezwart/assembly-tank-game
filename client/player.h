@@ -3,58 +3,32 @@
 #define MAX_PLAYERS 255 // Also change `MAX_CLIENTS` in `server.c`
 #define player_t uint8_t
 
-struct Tank player;
-struct Tank other_players[MAX_PLAYERS - 1];
-player_t num_other_players = 0;
-bool super_speed_enabled = false;
+extern struct Tank player;
+extern struct Tank other_players[MAX_PLAYERS - 1];
+extern player_t num_other_players;
+extern bool super_speed_enabled;
 
 /**
  * @brief Translates an in-game coordinate to a pixel on the screen.
  * @param x The in-game x coordinate.
  * @param y The in-game y coordinate.
  */
-struct Point
-translate(float x, float y)
-{
-	struct Point point;
-
-	point.x = x - player.x + width / 2;
-	point.y = y - player.y + height / 2;
-
-	return point;
-}
+extern struct Point
+translate(float x, float y);
 
 /**
  * @brief Translates a pixel coordinate to the in-game coordinate.
  * @param x The x coordinate of the pixel.
  * @param y The y coordinate of the pixel.
  */
-struct Point
-untranslate(int x, int y)
-{
-	struct Point point;
-
-	point.x = x + player.x - width / 2;
-	point.y = y + player.y - height / 2;
-
-	return point;
-}
+extern struct Point
+untranslate(int x, int y);
 
 /**
  * @returns The current player speed.
  */
-float
-get_player_speed(void)
-{
-	if (super_speed_enabled)
-	{
-		return PLAYER_SPEED_SUPER;
-	}
-	else
-	{
-		return PLAYER_SPEED_NORMAL;
-	}
-}
+extern float
+get_player_speed(void);
 
 /**
  * @brief Updates the position and rotation of the player and renders it.
