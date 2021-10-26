@@ -92,3 +92,43 @@
 
 .L_get_player_speed_ret:
 	ret
+
+/**
+ * Sends the current player position to the server.
+ */
+<%fn send_position_tick>
+	subq $24, %rsp
+
+	# char buf[13] @  0(%rsp)
+	# char *ptr    @ 16(%rsp)
+
+	movq %rsp, 16(%rsp)            # ptr = buf
+
+	leaq 16(%rsp), %rdi            # arg1 = &ptr (won't be touched)
+	movl $1, %esi                  # arg2 = CMT_PLAYER_POSITION
+	<%call write_u8>
+
+	leaq <%ref player>, %rcx       # load pointer to player
+	movss (%rcx), %xmm0            # arg2 = player.x
+	<%call write_f32>
+
+	movss 4(%rcx), %xmm0           # arg2 = player.y
+	<%call write_f32>
+
+	movl 8(%rcx), %esi             # arg2 = player.rot
+	<%call write_f32>
+
+	movq <%ref socket_fd>, %rdi    # arg1 = socket_fd
+	movq %rsp, %rsi                # arg2 = buf
+	movl $13, %edx                 # arg3 = buf_size
+	<%call write_to_socket>
+
+	addq $24, %rsp
+	ret
+
+/**
+ * Discards all entries in the `other_players` array.
+ */
+<%fn delete_other_players>
+	movb $0, <%ref num_other_players>
+	ret

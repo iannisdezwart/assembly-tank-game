@@ -91,28 +91,14 @@ update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy)
 /**
  * @brief Sends the current player position to the server.
  */
-void
-send_position_tick(void)
-{
-	char buf[13];
-	char *ptr = buf;
-
-	write_u8(&ptr, CMT_PLAYER_POSITION);
-	write_f32(&ptr, player.x);
-	write_f32(&ptr, player.y);
-	write_f32(&ptr, player.rot);
-
-	write_to_socket(socket_fd, buf, sizeof(buf));
-}
+extern void
+send_position_tick(void);
 
 /**
  * @brief Discards all entries in the `other_players` array.
  */
-void
-delete_other_players(void)
-{
-	num_other_players = 0;
-}
+extern void
+delete_other_players(void);
 
 /**
  * @brief Adds a player to the `other_players` array.
@@ -120,6 +106,7 @@ delete_other_players(void)
  * @param y The y coordinate of the other player.
  * @param rot The rotation of the other player.
  * @param health The health of the other player.
+ * @param score The score of the other player.
  * @param username_size The length of the other player's username.
  * @param username The other player's username.
  */
