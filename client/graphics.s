@@ -393,10 +393,79 @@
 	ret
 
 /**
+ * Renders text onto the frame in a left align.
+ * @rdi font The font to use.
+ * @rsi text The text to write.
+ * @edx x The x coordinate of the location to render to.
+ * @ecx y The y coordinate of the location to render to.
+ */
+<%fn render_text>
+	pushq %rbx
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	subq $32, %rsp
+
+	# SDL_Colour colour @ 0(%rsp)
+	# SDL_Rect rect     @ 4(%rsp)
+
+	movq %rdi, %r12                # save font
+	movq %rsi, %r13                # save text
+
+	movl %edx, 4(%rsp)             # rect.x = x
+	movl %ecx, 8(%rsp)             # rect.y = y
+
+	movq <%ref renderer>, %rdi     # arg1 = renderer
+	leaq (%rsp), %rsi              # arg2 = &colour.r
+	leaq 1(%rsp), %rdx             # arg3 = &colour.g
+	leaq 2(%rsp), %rcx             # arg4 = &colour.b
+	leaq 3(%rsp), %r8              # arg5 = &colour.a
+	<%call SDL_GetRenderDrawColor>
+
+	movq %r12, %rdi                # arg1 = font
+	movq %r13, %rsi                # arg2 = text
+	leaq 12(%rsp), %rdx            # arg3 = &text_width
+	leaq 16(%rsp), %rcx            # arg4 = &text_height
+	<%call TTF_SizeText>
+
+	movq %r12, %rdi                # arg1 = font
+	movq %r13, %rsi                # arg2 = text
+	movl 0(%rsp), %edx             # arg3 = colour
+	<%call TTF_RenderText_Blended>
+	movq %rax, %r14                # save text_surface
+
+	movq <%ref renderer>, %rdi     # arg1 = renderer
+	movq %r14, %rsi                # arg2 = text_surface
+	<%call SDL_CreateTextureFromSurface>
+	movq %rax, %r15                # save text_texture
+
+	movq <%ref renderer>, %rdi     # arg1 = renderer
+	movq %r15, %rsi                # arg2 = text_texturet
+	xorl %edx, %edx                # arg3 = NULL
+	leaq 4(%rsp), %rcx             # arg4 = &rect
+	<%call SDL_RenderCopy>
+
+	movq %r14, %rdi                # arg1 = text_surface
+	<%call SDL_FreeSurface>
+
+	movq %r15, %rdi                # arg1 = text_texture
+	<%call SDL_DestroyTexture>
+
+	addq $32, %rsp
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %rbx
+	ret
+
+
+/**
  * Renders text onto the frame in a centred align.
  * @rdi font The font to use.
  * @rsi text The text to write.
- * @edx x The x coordinate of the middle location to render to.
+ * @edx x The middle x coordinate of the location to render to.
  * @ecx y The y coordinate of the location to render to.
  */
 <%fn render_text_centred>
@@ -405,7 +474,7 @@
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	subq $24, %rsp
+	subq $32, %rsp
 
 	# SDL_Colour colour @ 0(%rsp)
 	# SDL_Rect rect     @ 4(%rsp)
@@ -456,7 +525,78 @@
 	movq %r15, %rdi                # arg1 = text_texture
 	<%call SDL_DestroyTexture>
 
-	addq $24, %rsp
+	addq $32, %rsp
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %rbx
+	ret
+
+/**
+ * Renders text onto the frame in a right align.
+ * @rdi font The font to use.
+ * @rsi text The text to write.
+ * @edx x The right x coordinate of the location to render to.
+ * @ecx y The y coordinate of the location to render to.
+ */
+<%fn render_text_right>
+	pushq %rbx
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
+	subq $32, %rsp
+
+	# SDL_Colour colour @ 0(%rsp)
+	# SDL_Rect rect     @ 4(%rsp)
+
+	movq %rdi, %r12                # save font
+	movq %rsi, %r13                # save text
+
+	movl %edx, 4(%rsp)             # rect.x = x
+	movl %ecx, 8(%rsp)             # rect.y = y
+
+	movq <%ref renderer>, %rdi     # arg1 = renderer
+	leaq (%rsp), %rsi              # arg2 = &colour.r
+	leaq 1(%rsp), %rdx             # arg3 = &colour.g
+	leaq 2(%rsp), %rcx             # arg4 = &colour.b
+	leaq 3(%rsp), %r8              # arg5 = &colour.a
+	<%call SDL_GetRenderDrawColor>
+
+	movq %r12, %rdi                # arg1 = font
+	movq %r13, %rsi                # arg2 = text
+	leaq 12(%rsp), %rdx            # arg3 = &text_width
+	leaq 16(%rsp), %rcx            # arg4 = &text_height
+	<%call TTF_SizeText>
+
+	movl 12(%rsp), %ebx            # load text_width
+	subl %ebx, 4(%rsp)             # rect.x -= text_width /= 2
+
+	movq %r12, %rdi                # arg1 = font
+	movq %r13, %rsi                # arg2 = text
+	movl 0(%rsp), %edx             # arg3 = colour
+	<%call TTF_RenderText_Blended>
+	movq %rax, %r14                # save text_surface
+
+	movq <%ref renderer>, %rdi     # arg1 = renderer
+	movq %r14, %rsi                # arg2 = text_surface
+	<%call SDL_CreateTextureFromSurface>
+	movq %rax, %r15                # save text_texture
+
+	movq <%ref renderer>, %rdi     # arg1 = renderer
+	movq %r15, %rsi                # arg2 = text_texturet
+	xorl %edx, %edx                # arg3 = NULL
+	leaq 4(%rsp), %rcx             # arg4 = &rect
+	<%call SDL_RenderCopy>
+
+	movq %r14, %rdi                # arg1 = text_surface
+	<%call SDL_FreeSurface>
+
+	movq %r15, %rdi                # arg1 = text_texture
+	<%call SDL_DestroyTexture>
+
+	addq $32, %rsp
 	popq %r15
 	popq %r14
 	popq %r13
