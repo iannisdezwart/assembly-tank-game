@@ -56,7 +56,7 @@
  * @Adds a frame time record to the frame_times array.
  * @rdi time The current time.
  */
-// <%fn add_frame_time>
+<%fn add_frame_time>
 	pushq %rbx
 
 	leaq <%ref frame_times>, %rbx      # load pointer to frame times
@@ -79,6 +79,7 @@
 
 	cvtsi2ss %rdi, %xmm0               # convert dt to float
 	divss .L_float_100(%rip), %xmm0    # dt /= USEC_PER_DT
+	movss %xmm0, <%ref dt>             # save dt
 
 	addq $2, %r8                       # frame_times_index += 2
 	movq %r8, <%ref frame_times_index> # store frame_times_index

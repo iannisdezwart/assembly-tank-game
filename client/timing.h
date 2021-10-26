@@ -22,20 +22,5 @@ init_timings(void);
  * @brief Adds a frame time record to the frame_times array.
  * @param time The current time.
  */
-void
-add_frame_time(uint64_t time)
-{
-	if (frame_times_index == FPS_CALC_FRAMES)
-	{
-		compute_avg_fps();
-		frame_times[0] = frame_times[FPS_CALC_FRAMES - 1];
-		frame_times_index = 1;
-	}
-
-	frame_times[frame_times_index] = time;
-
-	dt = frame_times[frame_times_index] - frame_times[frame_times_index - 1];
-	dt /= USEC_PER_DT;
-
-	frame_times_index++;
-}
+extern void
+add_frame_time(uint64_t time);
