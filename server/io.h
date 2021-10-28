@@ -4,8 +4,9 @@
  * @param client A pointer to the client that sent the data.
  * @param read_buf Contains the read data.
  * @param read_buf_size Number of bytes on the buffer.
+ * @returns A boolean indicating whether the client should be kicked.
  */
-void
+bool
 handle_incoming_data(struct Client *clients, struct Client *client,
 	char *read_buf, size_t read_buf_size)
 {
@@ -51,8 +52,7 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 						"because they sent two "
 						"handshakes\n", client->fd);
 
-					del_client(clients, client);
-					return;
+					return true;
 				}
 
 				client->player.username_size  = read_u8(&read_ptr);
@@ -194,13 +194,16 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				break;
 
 			default:
-				penalise_bad_client_behaviour(clients, client);
 				fprintf(stderr,
 					"Received unknown message of type %u\n",
 					msg_type);
-				return;
+
+				return penalise_bad_client_behaviour(
+					clients, client);
 		}
 	}
+
+	return false;
 }
 
 /**
@@ -303,7 +306,14 @@ handle_io(struct Client *clients, struct Client *client, size_t *client_index)
 	}
 
 	done_io = true;
-	handle_incoming_data(clients, client, read_buf, bytes_rw);
+
+	if (handle_incoming_data(clients, client, read_buf, bytes_rw))
+	{
+		// If handle_incoming_data returned true,
+		// the client should be kicked
+
+		*client_index = kick_client(clients, client);
+	}
 
 	ret:
 	return done_io;

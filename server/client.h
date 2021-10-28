@@ -166,23 +166,31 @@ del_client(struct Client *clients, struct Client *obsolete_client)
  * or has a terrible connection.
  * @param clients A pointer to the start of the clients array.
  * @param client The client that behaved badly.
+ * @returns A boolean indicating whether the client should be disconnected
  */
-void
+bool
 penalise_bad_client_behaviour(struct Client *clients, struct Client *client)
+{
+	client->behaviour--;
+	return client->behaviour == 0;
+}
+
+/**
+ * @brief Immediately sends a player a message that it has been kicked.
+ * @param clients A pointer to the start of the clients array.
+ * @param client The client that should be kicked.
+ */
+size_t
+kick_client(struct Client *clients, struct Client *client)
 {
 	char buf[1];
 	char *ptr = buf;
 
-	client->behaviour--;
+	printf("Kicked client %d because of bad behaviour\n",
+		client->fd);
 
-	if (client->behaviour == 0)
-	{
-		printf("Kicked client %d because of bad behaviour\n",
-			client->fd);
+	write_u8(&ptr, SMT_BAD_BEHAVIOUR);
+	write(client->fd, buf, sizeof(buf));
 
-		write_u8(&ptr, SMT_BAD_BEHAVIOUR);
-		write(client->fd, buf, sizeof(buf));
-
-		del_client(clients, client);
-	}
+	return del_client(clients, client);
 }
