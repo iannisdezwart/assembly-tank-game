@@ -10,17 +10,9 @@
  * Returns the number of microseconds since EPOCH.
  */
 <%fn now>
-        subq    $24, %rsp
-        leaq    8(%rsp), %rdi
-        xorl    %esi, %esi
-        callq   gettimeofday
-        imulq   $1000000, 8(%rsp), %rax         # imm = 0xF4240
-        addq    16(%rsp), %rax
-        addq    $24, %rsp
-        retq
-	# struct timeval tv @ 0(%rsp)
-
 	subq $24, %rsp
+
+	# struct timeval tv @ 0(%rsp)
 
 	movq %rsp, %rdi              # arg1 = &tv
 	xorl %esi, %esi              # arg2 = NULL
