@@ -50,9 +50,9 @@ extern bool
 Bullet_is_active(struct Bullet *bullet);
 
 extern struct Bullet bullets_arr[MAX_BULLETS];
-struct Bullet *bullets = bullets_arr;
+extern struct Bullet *bullets;
 extern struct Bullet new_bullets_arr[MAX_BULLETS];
-struct Bullet *new_bullets = new_bullets_arr;
+extern struct Bullet *new_bullets;
 
 extern size_t n_bullets;
 

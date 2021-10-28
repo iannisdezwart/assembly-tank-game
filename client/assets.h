@@ -33,11 +33,8 @@ free_font(Font *font);
  * @returns An SDL_Surface containing the BMP image.
  * @warning Use `SDL_FreeSurface()` to free the memory used by the BMP image.
  */
-SDL_Surface *
-load_bmp(char *bmp_file_path)
-{
-	return SDL_LoadBMP(bmp_file_path);
-}
+extern SDL_Surface *
+load_bmp(char *bmp_file_path);
 
 /**
  * @brief Loads all vital assets into memory.

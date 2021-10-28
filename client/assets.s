@@ -55,6 +55,24 @@
 <%fn free_font>
 	<%jmp TTF_CloseFont>
 
+/**
+ * Loads a BMP image into memory so it can be rendered to the screen
+ * whenever needed.
+ * @rdi bmp_file_path The file path of the BMP image.
+ */
+<%fn load_bmp>
+	subq $8, %rsp
+
+	                                    # arg1 = bmp_file_path (alr in %rdi)
+	leaq .L_load_bmp_rb_str(%rip), %rsi # arg2 = "rb"
+	<%call SDL_RWFromFile>
+
+	movq %rax, %rdi                     # arg1 = result
+	movl $1, %esi                       # arg2 = 1 (free src after read)
+
+	addq $8, %rsp                       # prepare to tailcall
+	<%jmp SDL_LoadBMP_RW>
+
 .L_load_bmp_rb_str:
 	.string "rb"
 

@@ -54,13 +54,13 @@ struct Point
 /**
  * @brief Translates an in-game coordinate to a physical pixel coordinate.
  */
-struct Point
+extern struct Point
 translate(float x, float y);
 
 /**
  * @brief Translates a physical pixel coordinate back to an in-game coordinate.
  */
-struct Point
+extern struct Point
 untranslate(int x, int y);
 
 /**

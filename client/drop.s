@@ -344,7 +344,6 @@ del_powerup:
 	pushq %rbx
 	pushq %rax
 
-	<%call debug6>
 	<%call now>                    # time = now()
 	cmpq $0, <%ref n_powerups>     # if n_powerups == 0: return
 	je .L_update_powerups_ret

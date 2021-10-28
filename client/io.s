@@ -125,8 +125,6 @@
 	je .L_handle_events_render
 
 	movl (%rsp), %eax              # load event.type
-	movl %eax, %edi
-	<%call debug5>
 
 	cmpl $256, %eax                # SDL_QUIT
 	je .L_handle_events_quit
@@ -143,8 +141,6 @@
 
 .L_handle_events_poll_event_loop_keydown:
 	movl 16(%rsp), %eax            # load scancode
-	movl %eax, %edi
-	<%call debug4>
 
 	cmpl $26, %eax                 # W
 	je .L_handle_events_poll_event_loop_keydown_w
@@ -340,19 +336,12 @@
 	leaq 4160(%rsp), %r13          # save &read_ptr
 	movq %rax, %r12                # save read_buf_size
 
-	movq 4160(%rsp), %rdi
-	movq %r12, %rsi
-	<%call debug2>
-
 .L_handle_events_read_socket_loop_check:
 	cmpq $0, %r12                  # if read_buf_size <= 0: stop
 	jle .L_handle_events_schedule_next_frame
 
 	movq %r13, %rdi                # arg1 = &read_ptr
 	<%call read_u8>
-
-	movb %al, %dil
-	<%call debug1>
 
 	testb %al, %al                 # SMT_HANDSHAKE
 	je .L_handle_events_smt_handshake

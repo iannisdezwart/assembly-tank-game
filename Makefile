@@ -7,15 +7,15 @@ CLIENT_ASM_FILES = client/assets.pp.s client/bullet.pp.s client/drop.pp.s \
 	client/health_bar.pp.s client/io.pp.s client/leaderboard.pp.s \
 	client/map.pp.s client/network.pp.s client/render.pp.s \
 	client/tank.pp.s client/timing.pp.s client/graphics.pp.s \
-	client/player.pp.s
+	client/player.pp.s client/window.pp.s tank_game_client.pp.s
 
 all: tank_game_client tank_game_server
 
 .PHONY: tank_game_client
 tank_game_client: tank_game_client.c
 	node cross_compile_asm $(shell uname -s)
-	$(CC) $(SHARED_ASM_FILES) tank_game_client.c -o tank_game_client \
-		$(CLIENT_CFLAGS) $(CLIENT_ASM_FILES)
+	$(CC) $(SHARED_ASM_FILES) $(CLIENT_ASM_FILES) \
+		-o tank_game_client $(CLIENT_CFLAGS)
 
 .PHONY: tank_game_server
 tank_game_server: tank_game_server.c

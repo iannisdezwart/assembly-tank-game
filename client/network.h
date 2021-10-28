@@ -1,5 +1,3 @@
-#define SERVER_PORT 4242
-
 extern char *server_ip;
 extern int socket_fd;
 extern int client_id;

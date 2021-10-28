@@ -1,7 +1,3 @@
-#define LEADERBOARD_COLOUR 0xFF, 0x00, 0x00
-#define LEADERBOARD_MARGIN 0
-#define LEADERBOARD_GAP 30
-
 /**
  * @brief Structure for a leaderboard entry.
  * @param username The username to show on the leaderboard.
@@ -13,7 +9,7 @@ struct LeaderboardEntry
 	score_t score;
 };
 
-struct LeaderboardEntry leaderboard[MAX_PLAYERS];
+extern struct LeaderboardEntry leaderboard[MAX_PLAYERS];
 
 /**
  * @brief A comparison function for leaderboard entry structures.

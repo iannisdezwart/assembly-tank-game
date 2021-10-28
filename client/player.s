@@ -244,7 +244,7 @@
 	movss 4(%rcx), %xmm0           # arg2 = player.y
 	<%call write_f32>
 
-	movl 8(%rcx), %esi             # arg2 = player.rot
+	movss 8(%rcx), %xmm0           # arg2 = player.rot
 	<%call write_f32>
 
 	movq <%ref socket_fd>, %rdi    # arg1 = socket_fd
@@ -274,21 +274,22 @@
  */
 <%fn add_other_player>
 	movzbl <%ref num_other_players>, %eax # load num_other_players
+	shlq $5, %rax                         # num_other_players *= 32
 	leaq <%ref other_players>, %r8 # load pointer to other_players array
 
-	movss %xmm0, (%r8, %rax)      # player->x = x
-	movss %xmm1, 4(%r8, %rax)     # player->y = y
-	movss %xmm2, 8(%r8, %rax)     # player->rot = rot
-	movb %dil, 12(%r8, %rax)      # player->health = health
-	movb %dl, 13(%r8, %rax)       # player->username_size = username_size
-	movw %si, 30(%r8, %rax)       # player->score = score
+	movss %xmm0, (%r8, %rax)       # player->x = x
+	movss %xmm1, 4(%r8, %rax)      # player->y = y
+	movss %xmm2, 8(%r8, %rax)      # player->rot = rot
+	movb %dil, 12(%r8, %rax)       # player->health = health
+	movb %dl, 13(%r8, %rax)        # player->username_size = username_size
+	movw %si, 30(%r8, %rax)        # player->score = score
 
-	leaq 14(%r8, %rax), %rdi      # arg1 = player->username
+	leaq 14(%r8, %rax), %rdi       # arg1 = player->username
 	movq %rcx, %rsi                # arg2 = username
 	movl $15, %edx                 # arg3 = max string size
 
 	addl $1, %eax                  # num_other_players++
-	movl %eax, <%ref num_other_players> # store num_other_players
+	movb %al, <%ref num_other_players> # store num_other_players
 
 	<%jmp strncpy>                 # tailcall
 
@@ -296,33 +297,35 @@
  * @brief Renders the other players.
  */
 <%fn update_other_players>
-	pushq %rbx
-	pushq %r12
-	subq $8, %rsp
-
-	leaq <%ref other_players>, %rbx     # player = players
-	movq %rbx, %r12                     # players_end = players
-	movq <%ref num_other_players>, %rax # load num_other_players
-
-	testq %rax, %rax                    # if num_other_players == 0: return
+	cmpb $0, <%ref num_other_players>
 	je .L_update_other_players_ret
 
-	shrq $5, %rax                       # num_other_players *= 32
-	leaq (%r12, %rax), %r12             # players_end += num_other_players
+.L_update_other_players:
+	pushq %rbp
+	pushq %rbx
+	subq $8, %rsp
+
+	xorl %ebx, %ebx                     # i = 0
 
 .L_update_other_players_loop:
-	movq %rbx, %rdi                     # arg1 = player
+	movzbl %bl, %ebp                    # save i to compute ptr
+	addl $1, %ebx                       # i++
+	salq $5, %rbp                       # ptr index *= 32
+	leaq <%ref other_players>, %rcx     # load ptr to other_players
+	addq %rcx, %rbp                     # compute ptr to player
+
+	movq %rbp, %rdi                     # arg1 = other_players + i
 	<%call render_tank>
 
-	movq %rbx, %rdi                     # arg1 = player
+	movq %rbp, %rdi                     # arg1 = other_players + i
 	<%call render_health_bar>
 
-	addq $32, %rbx                      # player++
-	cmpq %r12, %rbx                     # if player == players_end: return
-	jne .L_update_other_players_loop
+	cmpb %bl, <%ref num_other_players>  # continue if i < num_other_players
+	ja .L_update_other_players_loop
+
+	addq $8, %rsp
+	popq %rbx
+	popq %rbp
 
 .L_update_other_players_ret:
-	addq $8, %rsp
-	popq %r12
-	popq %rbx
 	ret

@@ -1,5 +1,3 @@
-#define PLAYER_SPEED_NORMAL 0.03
-#define PLAYER_SPEED_SUPER 0.04
 #define MAX_PLAYERS 255 // Also change `MAX_CLIENTS` in `server.c`
 #define player_t uint8_t
 

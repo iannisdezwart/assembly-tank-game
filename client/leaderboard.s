@@ -1,5 +1,12 @@
 .equ LeaderboardEntry_SIZE, 18
 
+.data
+
+leaderboard:
+	.skip 4590
+
+.text
+
 /**
  * struct LeaderboardEntry
  * Structure for a leaderboard entry.

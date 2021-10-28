@@ -10,8 +10,14 @@
 <%glbl bullets_arr>
 	.skip 40960
 
+<%glbl bullets>
+	.quad <%ifmacos _>bullets_arr
+
 <%glbl new_bullets_arr>
 	.skip 40960
+
+<%glbl new_bullets>
+	.quad <%ifmacos _>new_bullets_arr
 
 .text
 /**
