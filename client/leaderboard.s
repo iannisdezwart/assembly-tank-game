@@ -2,7 +2,7 @@
 
 .data
 
-leaderboard:
+<%glbl leaderboard>
 	.skip 4590
 
 .text
