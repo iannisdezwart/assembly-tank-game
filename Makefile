@@ -12,7 +12,7 @@ CLIENT_ASM_FILES = client/assets.pp.s client/bullet.pp.s client/drop.pp.s \
 all: tank_game_client tank_game_server
 
 .PHONY: tank_game_client
-tank_game_client: tank_game_client.c
+tank_game_client: tank_game_client.s
 	node cross_compile_asm $(shell uname -s)
 	$(CC) $(SHARED_ASM_FILES) $(CLIENT_ASM_FILES) \
 		-o tank_game_client $(CLIENT_CFLAGS)
