@@ -144,7 +144,7 @@
 	jge .L_read_from_socket_ret
 
 	<%call __errno_location>
-	cmpq <%ifmacos $35><%iflinux $11>, (%rax) # if errno == EAGAIN: err
+	cmpl <%ifmacos $35><%iflinux $11>, (%rax) # if errno == EAGAIN: err
 	je .L_read_from_socket_eagain
 
 	<%call geterr>
