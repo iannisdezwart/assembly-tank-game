@@ -43,6 +43,18 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 					break;
 				}
 
+				// Disconnect client if they already sent a handshake
+
+				if (client->active)
+				{
+					printf("Disconnected client %d "
+						"because they sent two "
+						"handshakes\n", client->fd);
+
+					del_client(clients, client);
+					return;
+				}
+
 				client->player.username_size  = read_u8(&read_ptr);
 				strncpy(client->player.username, read_ptr,
 					TANK_USERNAME_MAX_SIZE);
@@ -182,10 +194,11 @@ handle_incoming_data(struct Client *clients, struct Client *client,
 				break;
 
 			default:
+				penalise_bad_client_behaviour(clients, client);
 				fprintf(stderr,
 					"Received unknown message of type %u\n",
 					msg_type);
-				break;
+				return;
 		}
 	}
 }

@@ -25,8 +25,7 @@
 #define IDLE_TIMEOUT_USEC 10000
 
 #define die(msg) do { \
-	fprintf(stderr, msg ": %s\n", \
-		strerror(errno)); \
+	printf(msg ": %s\n", strerror(errno)); \
 	exit(1); \
 } while (0);
 

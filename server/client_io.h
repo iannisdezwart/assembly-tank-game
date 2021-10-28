@@ -175,6 +175,12 @@ void
 send_deleted_bullets(struct Client *clients)
 {
 	size_t size = deleted_bullets_ptr - deleted_bullets;
+
+	if (size == 0)
+	{
+		return;
+	}
+
 	size_t buf_size = 9 + size * sizeof(bullet_id_t);
 	char *buf = malloc(buf_size);
 	char *ptr = buf;

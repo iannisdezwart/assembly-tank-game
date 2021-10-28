@@ -53,6 +53,9 @@
 .L_handle_events_smt_unknown_err_str:
 	.string "Received unknown message from server of type %u of length %lu\n"
 
+.L_handle_events_bad_behaviour_str:
+	.string "The server kicked you because of bad behaviour\n"
+
 .text
 /**
  * @brief Initialises some variables used in the `handle_events()` function.
@@ -282,6 +285,9 @@
 
 	<%call now>
 	movq %rax, <%ref last_server_tick_time> # last_server_tick_time = now()
+
+	cmpw $0, 12(%rbx)              # if player is dead:
+	je .L_handle_events_shoot_check #  don't send position tick
 	<%call send_position_tick>
 
 .L_handle_events_shoot_check:
@@ -369,6 +375,9 @@
 
 	cmpb $8, %al                   # SMT_POWERUP
 	je .L_handle_events_smt_powerup
+
+	cmpb $9, %al                   # SMT_BAD_BEHAVIOUR
+	je .L_handle_events_bad_behaviour
 	jmp .L_handle_events_smt_unknown
 
 .L_handle_events_smt_handshake:
@@ -677,6 +686,12 @@
 
 	subq $2, %r12                  # read_buf_size -= 2
 	jmp .L_handle_events_read_socket_loop_check
+
+.L_handle_events_bad_behaviour:
+	leaq .L_handle_events_bad_behaviour_str(%rip), %rdi
+	<%call puts>
+
+	jmp .L_handle_events_quit
 
 .L_handle_events_smt_unknown:
 	leaq .L_handle_events_smt_unknown_err_str(%rip), %rdi

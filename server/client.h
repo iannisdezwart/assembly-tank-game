@@ -21,6 +21,7 @@ struct Client
 	bool active;
 	uint64_t kill_time;
 	Client_flag_t flags;
+	uint8_t behaviour;
 };
 
 /**
@@ -122,6 +123,7 @@ add_client(struct Client *clients, size_t client_index, int new_client_fd)
 	clients[client_index].player.score = 0;
 	clients[client_index].active = false;
 	clients[client_index].flags = 0;
+	clients[client_index].behaviour = 10;
 
 	client_index++;
 
@@ -146,12 +148,41 @@ del_client(struct Client *clients, struct Client *obsolete_client)
 	printf("Client socket %d closed\n",
 		obsolete_client->fd);
 
-	obsolete_client->fd = 0;
-
 	if (obsolete_client->write_queue != NULL)
 	{
 		free_write_queue(obsolete_client->write_queue);
 	}
 
+	close(obsolete_client->fd);
+	obsolete_client->fd = 0;
+
 	return obsolete_client - clients;
+}
+
+/**
+ * @brief Subtracts a behaviour point from a client.
+ * The client is disconnected if they run out of behaviour points.
+ * This function is called when a client sends gibberish over the network,
+ * or has a terrible connection.
+ * @param clients A pointer to the start of the clients array.
+ * @param client The client that behaved badly.
+ */
+void
+penalise_bad_client_behaviour(struct Client *clients, struct Client *client)
+{
+	char buf[1];
+	char *ptr = buf;
+
+	client->behaviour--;
+
+	if (client->behaviour == 0)
+	{
+		printf("Kicked client %d because of bad behaviour\n",
+			client->fd);
+
+		write_u8(&ptr, SMT_BAD_BEHAVIOUR);
+		write(client->fd, buf, sizeof(buf));
+
+		del_client(clients, client);
+	}
 }
