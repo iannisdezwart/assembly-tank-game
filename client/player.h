@@ -38,55 +38,8 @@ get_player_speed(void);
  * @param pointer_dx The change in x of the pointer.
  * @param pointer_dy The change in y of the pointer.
  */
-void
-update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy)
-{
-	if (player.health == 0)
-	{
-		return;
-	}
-
-	float mult = 1;
-
-	if (abs(dx) + abs(dy) == 2)
-	{
-		mult = 0.707; // sqrt 2
-	}
-
-	player.x += mult * get_player_speed() * dx * dt;
-	player.y += mult * get_player_speed() * dy * dt;
-
-	// Map bound checking
-
-	if (player.x < 0)
-	{
-		player.x = 0;
-	}
-
-	if (player.x > MAP_WIDTH)
-	{
-		player.x = MAP_WIDTH;
-	}
-
-	if (player.y < 0)
-	{
-		player.y = 0;
-	}
-
-	if (player.y > MAP_HEIGHT)
-	{
-		player.y = MAP_HEIGHT;
-	}
-
-	// Rotate player
-
-	player.rot = atan2(pointer_dy, pointer_dx);
-
-	// Render player
-
-	render_tank(&player);
-	render_health_bar(&player);
-}
+extern void
+update_player(int8_t dx, int8_t dy, int pointer_dx, int pointer_dy);
 
 /**
  * @brief Sends the current player position to the server.
@@ -110,32 +63,12 @@ delete_other_players(void);
  * @param username_size The length of the other player's username.
  * @param username The other player's username.
  */
-void
+extern void
 add_other_player(float x, float y, float rot, health_t health,
-	score_t score, uint8_t username_size, char *username)
-{
-	other_players[num_other_players].x = x;
-	other_players[num_other_players].y = y;
-	other_players[num_other_players].rot = rot;
-	other_players[num_other_players].score = score;
-	other_players[num_other_players].health = health;
-	other_players[num_other_players].username_size = username_size;
-	strncpy(other_players[num_other_players].username, username,
-		username_size);
-
-
-	num_other_players++;
-}
+	score_t score, uint8_t username_size, char *username);
 
 /**
  * @brief Renders the other players.
  */
-void
-update_other_players(void)
-{
-	for (player_t i = 0; i < num_other_players; i++)
-	{
-		render_tank(other_players + i);
-		render_health_bar(other_players + i);
-	}
-}
+extern void
+update_other_players(void);

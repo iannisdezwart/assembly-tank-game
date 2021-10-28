@@ -18,6 +18,13 @@
 .L_float_0_03:
 	.long 0x3cf5c28f
 
+.L_float_1_or_sqrt2:
+	.long 0x3f800000 # float 1
+	.long 0x3f34fdf4 # float 0.707
+
+.L_float_5000:
+	.long 0x459c4000 # float 5000
+
 .text
 /**
  * Translates an in-game coordinate to a pixel on the screen.
@@ -94,6 +101,128 @@
 	ret
 
 /**
+ * @brief Updates the position and rotation of the player and renders it.
+ * The position of the player is only updated if the player is alive.
+ * @dil dx The change in x of the tank.
+ * @sil dy The change in y of the tank.
+ * @edx pointer_dx The change in x of the pointer.
+ * @ecx pointer_dy The change in y of the pointer.
+ */
+<%fn update_player>
+	pushq %rbp
+	pushq %r15
+	pushq %r14
+	pushq %r13
+	pushq %rbx
+	subq $16, %rsp
+
+	# float spill @ 4(%rsp)
+
+	leaq <%ref player>, %r13       # load pointer to player
+	cmpb $0, 12(%r13)              # if player.health == 0: return
+	je .L_update_player_ret
+
+	movl %edi, %ebp                # save dx
+	movl %esi, %ebx                # save dy
+	movl %edx, %r14d               # save pointer_dx
+	movl %ecx, %r15d               # save pointer_dy
+	movl %ebp, %eax                # copy dx
+
+	# this is a big brain way to get the absolute value of dx
+	sarb $7, %al                   # get sign bit of dx
+	leal (%rax, %rbp), %ecx        # compute dx + sign bit
+	xorb %al, %cl                  # flip bits if sign (two's complement)
+	movzbl %cl, %eax               # save abs(dx)
+	# same thing
+	movl %ebx, %ecx                # copy dy
+	sarb $7, %cl                   # get sign bit of dy
+	leal (%rbx, %rcx), %edx        # compute dy + sign bit
+	xorb %cl, %dl                  # flip bits if sign (two's complement)
+	movzbl %dl, %ecx               # save abs(dy)
+
+	addl %eax, %ecx                # abs(dx) + abs(dy)
+	xorl %eax, %eax                # flag = 0
+	cmpl $2, %ecx                  # if abs(dx) + abs(dy) == 2:
+	sete %al                       #   mult *= sqrt(2)
+
+	leaq .L_float_1_or_sqrt2(%rip), %rcx # load pointer to 1 or sqrt2
+	movss (%rcx, %rax, 4), %xmm0         # xmm0 = mult
+	movss %xmm0, 4(%rsp)                 # save mult
+
+	<%call get_player_speed>
+	movsbl %bpl, %eax              # load dx
+	cvtsi2ss %eax, %xmm1           # xmm1 = dx cast to float
+	mulss 4(%rsp), %xmm0           # xmm0 = mult * speed
+	mulss %xmm0, %xmm1             # xmm1 = mult * speed * dx
+	mulss <%ref dt>, %xmm1         # xmm1 = mult * speed * dx * dt
+	addss <%ref player>, %xmm1     # xmm1 = mult * speed * dx * dt + plyr.x
+	movss %xmm1, <%ref player>     # save into player.x
+
+	<%call get_player_speed>
+	movsbl %bl, %eax               # load dy
+	xorps %xmm1, %xmm1             # zero xmm1
+	cvtsi2ss %eax, %xmm1           # xmm1 = dy cast to float
+	mulss 4(%rsp), %xmm0           # xmm0 = mult * speed
+	mulss %xmm0, %xmm1             # xmm1 = mult * speed * dy
+	mulss <%ref dt>, %xmm1         # xmm1 = mult * speed * dy * dt
+	addss 4(%r13), %xmm1           # xmm1 = mult * speed * dy * dt + plyr.y
+	movss %xmm1, 4(%r13)           # save into player.y
+
+	movss <%ref player>, %xmm2     # load player.x
+	xorps %xmm0, %xmm0             # xmm0 = 0
+	ucomiss %xmm2, %xmm0           # if player.x < 0: x = 0
+	ja .L_update_player_bound_left
+
+	movss .L_float_5000(%rip), %xmm0 # xmm0 = MAP_WIDTH
+	ucomiss %xmm0, %xmm2           # if player.x > MAP_WIDTH: x = MAP_WIDTH
+	jbe .L_update_player_bound_right
+
+.L_update_player_bound_left:
+	movss %xmm0, <%ref player>     # player.x = 0
+
+.L_update_player_bound_right:
+	xorps %xmm0, %xmm0             # xmm0 = 0
+	ucomiss %xmm1, %xmm0           # if player.y == 0: y = 0
+	ja .L_update_player_bound_up
+	movss .L_float_5000(%rip), %xmm0 # xmm0 = MAP_WIDTH
+	ucomiss %xmm0, %xmm1           # if player.y > MAP_WIDTH: y = MAP_WIDTH
+	jbe .L_update_player_bound_down
+
+.L_update_player_bound_up:
+	movss %xmm0, 4(%r13)           # player.y = 0
+
+.L_update_player_bound_down:
+	xorps %xmm0, %xmm0             # clear xmm0
+	cvtsi2sd %r15d, %xmm0          # xmm0 = (float) pointer_dy
+	xorps %xmm1, %xmm1             # clear xmm1
+	cvtsi2sd %r14d, %xmm1          # xmm1 = (float) pointer_dx
+	<%call atan2>
+
+	cvtsd2ss %xmm0, %xmm0          # xmm0 from double to float
+	movss %xmm0, 8(%r13)           # store in player.angle
+
+	movq %r13, %rdi                # arg1 = player
+	<%call render_tank>
+
+	movq %r13, %rdi                # arg1 = player
+	addq $16, %rsp                 # prepare to tailcall
+	popq %rbx
+	popq %r13
+	popq %r14
+	popq %r15
+	popq %rbp
+	<%jmp render_health_bar> # tailcall
+
+.L_update_player_ret:
+	addq $16, %rsp
+	popq %rbx
+	popq %r13
+	popq %r14
+	popq %r15
+	popq %rbp
+	ret
+
+/**
  * Sends the current player position to the server.
  */
 <%fn send_position_tick>
@@ -131,4 +260,69 @@
  */
 <%fn delete_other_players>
 	movb $0, <%ref num_other_players>
+	ret
+
+/**
+ * Adds a player to the `other_players` array.
+ * @xmm0 x The x coordinate of the other player.
+ * @xmm1 y The y coordinate of the other player.
+ * @xmm2 rot The rotation of the other player.
+ * @dil health The health of the other player.
+ * @si score The score of the other player.
+ * @dl username_size The length of the other player's username.
+ * @rcx username The other player's username.
+ */
+<%fn add_other_player>
+	movzbl <%ref num_other_players>, %eax # load num_other_players
+	leaq <%ref other_players>, %r8 # load pointer to other_players array
+
+	movss %xmm0, (%r8, %rax)      # player->x = x
+	movss %xmm1, 4(%r8, %rax)     # player->y = y
+	movss %xmm2, 8(%r8, %rax)     # player->rot = rot
+	movb %dil, 12(%r8, %rax)      # player->health = health
+	movb %dl, 13(%r8, %rax)       # player->username_size = username_size
+	movw %si, 30(%r8, %rax)       # player->score = score
+
+	leaq 14(%r8, %rax), %rdi      # arg1 = player->username
+	movq %rcx, %rsi                # arg2 = username
+	movl $15, %edx                 # arg3 = max string size
+
+	addl $1, %eax                  # num_other_players++
+	movl %eax, <%ref num_other_players> # store num_other_players
+
+	<%jmp strncpy>                 # tailcall
+
+/**
+ * @brief Renders the other players.
+ */
+<%fn update_other_players>
+	pushq %rbx
+	pushq %r12
+	subq $8, %rsp
+
+	leaq <%ref other_players>, %rbx     # player = players
+	movq %rbx, %r12                     # players_end = players
+	movq <%ref num_other_players>, %rax # load num_other_players
+
+	testq %rax, %rax                    # if num_other_players == 0: return
+	je .L_update_other_players_ret
+
+	shrq $5, %rax                       # num_other_players *= 32
+	leaq (%r12, %rax), %r12             # players_end += num_other_players
+
+.L_update_other_players_loop:
+	movq %rbx, %rdi                     # arg1 = player
+	<%call render_tank>
+
+	movq %rbx, %rdi                     # arg1 = player
+	<%call render_health_bar>
+
+	addq $32, %rbx                      # player++
+	cmpq %r12, %rbx                     # if player == players_end: return
+	jne .L_update_other_players_loop
+
+.L_update_other_players_ret:
+	addq $8, %rsp
+	popq %r12
+	popq %rbx
 	ret
