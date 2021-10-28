@@ -293,7 +293,7 @@
 	pushq %r13
 	pushq %r14
 	pushq %r15
-	subq $8, %rsp
+	subq $16, %rsp
 
 	# int x_centre @ 0(%rsp)
 	# int y_centre @ 4(%rsp)
@@ -346,7 +346,7 @@
 	jl .L_fill_circle_horizontal_loop
 
 .L_fill_circle_ret:
-	addq $8, %rsp
+	addq $16, %rsp
 	popq %r15
 	popq %r14
 	popq %r13
