@@ -19,7 +19,14 @@
 	<%call gettimeofday>
 
 	imulq $1000000, (%rsp), %rax # time = tv.tv_sec * 1000000
-	addq 8(%rsp), %rax           # time += tv.tv_usec
+
+	# time += tv.tv_usec
+	# here we have to be careful because the number of microseconds is
+	# 8 bytes on Linux, but 4 bytes on MacOS
+
+	<%ifmacos movslq 8(%rsp), %rdx>
+	<%ifmacos addq %rdx, %rax>
+	<%iflinux addq 8(%rsp), %rax>
 
 	addq $24, %rsp
 	ret
