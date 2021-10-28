@@ -147,7 +147,9 @@
 	cmpq <%ifmacos $35><%iflinux $11>, (%rax) # if errno == EAGAIN: err
 	je .L_read_from_socket_eagain
 
+	<%call geterr>
 	leaq .L_read_from_socket_err_str(%rip), %rdi
+	movq %rax, %rsi        # arg2 = error
 	<%call printf>
 
 .L_read_from_socket_eagain:
@@ -158,7 +160,7 @@
 	ret
 
 .L_read_from_socket_err_str:
-	.string "Wasn't able to read from server\n"
+	.string "Wasn't able to read from server: %s\n"
 
 /**
  * Closes the client socket.
