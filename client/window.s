@@ -1,3 +1,8 @@
+.equ SDL_WIN_FULSCREEN, 1
+.equ SDL_WIN_OPENGL, 2
+.equ SDL_WIN_BORDERLESS, 16
+.equ WIN_SIZE_RSHIFT, 0
+
 .data
 
 <%glbl width>
@@ -67,11 +72,11 @@
 	<%call SDL_GetCurrentDisplayMode>
 
 	movl 4(%rsp), %ecx             # load display_mode.w
-	shrl $1, %ecx                  # display_mode.w /= 2
+	shrl $WIN_SIZE_RSHIFT, %ecx    # display_mode.w >> WIN_SIZE_RSHIFT
 	movl %ecx, <%ref width>        # store in width
 
 	movl 8(%rsp), %ecx             # load display_mode.h
-	shrl $1, %ecx                  # display_mode.h /= 2
+	shrl $WIN_SIZE_RSHIFT, %ecx    # display_mode.h >> WIN_SIZE_RSHIFT
 	movl %ecx, <%ref height>       # store in width
 
 	movl 12(%rsp), %ecx            # load display_mode.refresh_rate
@@ -87,7 +92,7 @@
 	movl $805240832, %edx          # arg3 = SDL_WINPOS_CENTERED
 	movl <%ref width>, %ecx        # arg4 = width
 	movl <%ref height>, %r8d       # arg5 = height
-	movl $2, %r9d                  # arg6 = SDL_WINDOW_OPENGL
+	movl $SDL_WIN_FULSCREEN, %r9d  # arg6 = SDL_WINDOW_OPENGL
 	<%call SDL_CreateWindow>
 	movq %rax, <%ref window>
 
