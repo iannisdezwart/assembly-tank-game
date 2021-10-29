@@ -286,7 +286,8 @@
 	<%call now>
 	movq %rax, <%ref last_server_tick_time> # last_server_tick_time = now()
 
-	cmpw $0, 12(%rbx)              # if player is dead:
+	movb 12(%rbx), %al             # load player.dead
+	testb %al, %al                 # if player.dead:
 	je .L_handle_events_shoot_check #  don't send position tick
 	<%call send_position_tick>
 
