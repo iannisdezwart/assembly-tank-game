@@ -1,4 +1,4 @@
-.equ SDL_WIN_FULSCREEN, 1
+.equ SDL_WIN_FULLSCREEN, 1
 .equ SDL_WIN_OPENGL, 2
 .equ SDL_WIN_BORDERLESS, 16
 .equ WIN_SIZE_RSHIFT, 0
@@ -92,7 +92,7 @@
 	movl $805240832, %edx          # arg3 = SDL_WINPOS_CENTERED
 	movl <%ref width>, %ecx        # arg4 = width
 	movl <%ref height>, %r8d       # arg5 = height
-	movl $SDL_WIN_FULSCREEN, %r9d  # arg6 = SDL_WINDOW_OPENGL
+	movl $SDL_WIN_FULLSCREEN, %r9d # arg6 = SDL_WINDOW_FULLSCREEN
 	<%call SDL_CreateWindow>
 	movq %rax, <%ref window>
 
