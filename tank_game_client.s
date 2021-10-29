@@ -43,8 +43,8 @@
 	<%call cleanup_window>
 	<%call cleanup_socket>
 
-	xorl %eax, %eax                # exit with exit code 0
-	ret
+	xorl %edi, %edi                # exit with exit code 0
+	<%call exit>
 
 .L_main_print_usage_str:
 	leaq .L_usage_str(%rip), %rdi  # arg1 = usage str
