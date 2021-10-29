@@ -1,7 +1,7 @@
 # Assembly Tank Game
 
 Online multiplayer tank game written in Assembly.
-Compatible for x86 Linux and x86 MacOS.
+Compatible with x86 Linux and x86 MacOS machines.
 
 ## Installation
 
@@ -26,7 +26,7 @@ That's all!
 You can run the game with:
 
 ```sh
-./tank_game_client <server ip>
+./tank_game_client <server ip> [username]
 ```
 
 ## Server
@@ -43,5 +43,5 @@ And the server will start listening on port 4242.
 To connect a client to the local server, run
 
 ```sh
-./tank_game_client 127.0.0.1
+./tank_game_client 127.0.0.1 FancyUsername
 ```
